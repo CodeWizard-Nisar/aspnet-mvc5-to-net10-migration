@@ -1,48 +1,43 @@
 # aspnet-mvc5-to-net10-migration
 
-Incremental migration of a legacy ASP.NET MVC 5 application to .NET 10,
-without a rewrite and without downtime. Both versions run side by side
-behind a proxy while pages move across one at a time.
+Migrating a legacy ASP.NET MVC 5 app to .NET 10 incrementally, with both
+versions running behind a proxy while pages move across one at a time.
 
 ![Architecture](docs/architecture.svg)
 
-## Why this exists
+## Background
 
-.NET 8 reached end of support on 10 November 2026. A lot of production
-systems are now running unsupported, and most of them are too large to
-rewrite. The usual advice — "rewrite it in .NET Core" — is not advice a
-business can act on when the application is earning money every day.
+.NET 8 went out of support on 10 November 2026. Plenty of production
+systems are still on it, or still on .NET Framework, and most are too
+large to rewrite. "Rewrite it in .NET Core" isn't something a business
+can act on while the app is making money every day.
 
-This repo demonstrates the alternative: a strangler-fig migration, where
-the old and new applications serve traffic at the same time and
-functionality moves across incrementally.
+The alternative is a strangler-fig migration: old and new run at the same
+time, and functionality moves across piece by piece. This repo works
+through one.
 
-## What it demonstrates
+## Scope
 
-- Multi-targeting shared libraries to `net48` and `net10.0` so both
-  applications run the same business logic during the transition
-- Removing `System.Web` dependencies from business logic behind
-  interfaces, so the same code runs under both runtimes
-- YARP and `Microsoft.AspNetCore.SystemWebAdapters` sharing session
-  state between a .NET Framework app and a .NET 10 app
-- Migrating background jobs to a Worker Service as the low-risk first step
-- Characterization tests written before any change, as the safety net
-- Why EF6 stays in place through the migration, and how one bounded
-  context moves to EF Core afterwards
+- Shared libraries multi-targeted to `net48` and `net10.0`, so both apps
+  run the same business logic during the transition
+- `System.Web` dependencies pulled out of business logic behind interfaces
+- YARP plus `Microsoft.AspNetCore.SystemWebAdapters` for shared session
+  state across the two runtimes
+- Background jobs moved to a Worker Service first, as the lowest-risk step
+- Characterization tests written before any code changed
+- EF6 kept through the migration, with one bounded context moved to
+  EF Core afterwards
 
-## The sample application
+## The sample app
 
-ConfReg, a conference registration system: a four-step public
-registration wizard, an admin portal, and three background jobs.
-Small enough to read in an afternoon, realistic enough to contain the
-problems that make real migrations hard — session-held state, a
-30-minute payment hold, capacity rules, and configuration scattered
-through the code.
+ConfReg, a conference registration system. Four-step public registration
+wizard, admin portal, three background jobs. Small, but it has the things
+that make real migrations painful: state held in Session, a 30-minute
+payment hold, seat capacity rules, and config spread through the codebase.
 
-## The starting point
+## Known problems in the baseline
 
-The legacy app is deliberately built with the problems these projects
-actually have:
+The legacy app is built with the defects these codebases actually have:
 
 | Problem | Where |
 |---|---|
@@ -53,11 +48,14 @@ actually have:
 | No `[Authorize]`; login check in `_Layout.cshtml` | Admin portal |
 | Reversible password encryption | `AdminUser` |
 | Connections opened and never closed | `Shared.Data` |
-| No tests at all | — |
+| No tests | Whole solution |
 
-Each is documented in [docs/01-baseline.md](docs/01-baseline.md).
+Several more turned up during the build rather than being planned, including
+an auth check that only runs when a Razor layout renders, and a race on the
+last available seat. Those are listed separately in
+[docs/01-baseline.md](docs/01-baseline.md).
 
-## How it was done
+## Phases
 
 | Phase | What | Docs |
 |---|---|---|
@@ -71,22 +69,22 @@ Each is documented in [docs/01-baseline.md](docs/01-baseline.md).
 
 ## Results
 
-[Benchmark table goes here once Phase 6 is done — requests/sec, p95
-latency, memory, cold start. Real measured numbers only.]
+Benchmarks go here after Phase 6: requests/sec, p95 latency, memory and
+cold start, legacy against modern on the same dataset.
 
-## Running it locally
+## Running locally
 
 ```bash
-docker compose up -d        # SQL Server
+docker compose up -d                       # SQL Server
 dotnet run --project src/Modern.Web
-# Legacy.Web requires Windows and IIS Express
 ```
 
-Full setup in [docs/00-setup.md](docs/00-setup.md).
+`Legacy.Web` targets net48 and needs Windows with IIS Express. CI runs the
+legacy and characterization jobs on `windows-latest` and everything else on
+`ubuntu-latest`. Full setup in [docs/00-setup.md](docs/00-setup.md).
 
 ## Trade-offs
 
-Decisions made here that would be made differently elsewhere, and why:
-EF6 retained through the migration; IIS on Windows rather than
-containers; the front end left untouched.
-See [docs/08-tradeoffs.md](docs/08-tradeoffs.md).
+EF6 kept through the migration. IIS on Windows rather than containers.
+Front end left alone. Reasoning for each in
+[docs/08-tradeoffs.md](docs/08-tradeoffs.md).
