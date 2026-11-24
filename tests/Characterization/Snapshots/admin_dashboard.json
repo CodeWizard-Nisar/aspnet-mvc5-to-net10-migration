@@ -1,0 +1,46 @@
+{
+  "PaidToday": 0,
+  "PaidTotal": 120,
+  "PendingNow": 10,
+  "TotalRevenue": 37080.00,
+  "RevenueByTicket": [
+    {
+      "TicketType": "Standard",
+      "Registrations": 64,
+      "Revenue": 19136.00
+    },
+    {
+      "TicketType": "Workshop",
+      "Registrations": 31,
+      "Revenue": 15469.00
+    },
+    {
+      "TicketType": "Student",
+      "Registrations": 25,
+      "Revenue": 2475.00
+    }
+  ],
+  "CapacityWarnings": [
+    {
+      "TalkId": 13,
+      "Title": "SQL Server Indexing Myths",
+      "Capacity": 12,
+      "Taken": 12,
+      "PercentFull": 100
+    },
+    {
+      "TalkId": 6,
+      "Title": "Razor Pages vs MVC",
+      "Capacity": 30,
+      "Taken": 28,
+      "PercentFull": 93
+    },
+    {
+      "TalkId": 9,
+      "Title": "Caching Done Right",
+      "Capacity": 25,
+      "Taken": 22,
+      "PercentFull": 88
+    }
+  ]
+}

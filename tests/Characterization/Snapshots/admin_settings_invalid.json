@@ -1,0 +1,12 @@
+{
+  "PriceStandard": -1,
+  "PriceWorkshop": 499,
+  "PriceStudent": 99,
+  "OpensUtc": "\/Date(1893456000000)\/",
+  "ClosesUtc": "\/Date(1861920000000)\/",
+  "Notice": null,
+  "Errors": [
+    "Prices cannot be negative.",
+    "Registration must close after it opens."
+  ]
+}

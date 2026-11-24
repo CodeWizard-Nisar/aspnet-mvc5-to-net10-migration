@@ -1,0 +1,14 @@
+{
+  "Name": "Test Person",
+  "Email": "test.person@example.org",
+  "TicketType": "Standard",
+  "TotalAmount": 299,
+  "TalkTitles": [
+    "Strangler Fig in Practice"
+  ],
+  "SecondsRemaining": "<SECS>",
+  "ReferenceCode": "<REF>",
+  "Errors": [
+    "Your card was declined."
+  ]
+}

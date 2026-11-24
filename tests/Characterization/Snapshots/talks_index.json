@@ -1,0 +1,222 @@
+[
+  {
+    "Id": 1,
+    "Title": "Strangler Fig in Practice",
+    "Speaker": "Ava Okafor",
+    "Track": "Architecture",
+    "StartsUtc": "\/Date(1805187600000)\/",
+    "DurationMinutes": 60,
+    "Room": "Hall A",
+    "Capacity": 120,
+    "Taken": 23
+  },
+  {
+    "Id": 2,
+    "Title": "Modular Monoliths",
+    "Speaker": "Mateo Nasser",
+    "Track": "Web",
+    "StartsUtc": "\/Date(1805187600000)\/",
+    "DurationMinutes": 60,
+    "Room": "Hall B",
+    "Capacity": 80,
+    "Taken": 26
+  },
+  {
+    "Id": 3,
+    "Title": "Event Sourcing Without Tears",
+    "Speaker": "Sofia Khan",
+    "Track": "Data",
+    "StartsUtc": "\/Date(1805189400000)\/",
+    "DurationMinutes": 60,
+    "Room": "Room 101",
+    "Capacity": 60,
+    "Taken": 22
+  },
+  {
+    "Id": 4,
+    "Title": "Designing for Failure",
+    "Speaker": "Kofi Lindqvist",
+    "Track": "Architecture",
+    "StartsUtc": "\/Date(1805191200000)\/",
+    "DurationMinutes": 90,
+    "Room": "Hall A",
+    "Capacity": 40,
+    "Taken": 29
+  },
+  {
+    "Id": 5,
+    "Title": "Cutting Over Without Downtime",
+    "Speaker": "Mei Petrova",
+    "Track": "Web",
+    "StartsUtc": "\/Date(1805193000000)\/",
+    "DurationMinutes": 60,
+    "Room": "Hall B",
+    "Capacity": 100,
+    "Taken": 24
+  },
+  {
+    "Id": 6,
+    "Title": "Razor Pages vs MVC",
+    "Speaker": "Tomas Berg",
+    "Track": "Data",
+    "StartsUtc": "\/Date(1805197500000)\/",
+    "DurationMinutes": 60,
+    "Room": "Room 101",
+    "Capacity": 30,
+    "Taken": 28
+  },
+  {
+    "Id": 7,
+    "Title": "Minimal APIs at Scale",
+    "Speaker": "Rosa Haddad",
+    "Track": "Architecture",
+    "StartsUtc": "\/Date(1805202000000)\/",
+    "DurationMinutes": 60,
+    "Room": "Hall A",
+    "Capacity": 90,
+    "Taken": 26
+  },
+  {
+    "Id": 8,
+    "Title": "Front Ends That Age Well",
+    "Speaker": "Liam Mensah",
+    "Track": "Web",
+    "StartsUtc": "\/Date(1805202000000)\/",
+    "DurationMinutes": 60,
+    "Room": "Hall B",
+    "Capacity": 70,
+    "Taken": 15
+  },
+  {
+    "Id": 9,
+    "Title": "Caching Done Right",
+    "Speaker": "Priya Bello",
+    "Track": "Data",
+    "StartsUtc": "\/Date(1805206500000)\/",
+    "DurationMinutes": 45,
+    "Room": "Room 101",
+    "Capacity": 25,
+    "Taken": 22
+  },
+  {
+    "Id": 10,
+    "Title": "Auth Beyond Cookies",
+    "Speaker": "Omar Moreau",
+    "Track": "Architecture",
+    "StartsUtc": "\/Date(1805274000000)\/",
+    "DurationMinutes": 60,
+    "Room": "Hall A",
+    "Capacity": 110,
+    "Taken": 15
+  },
+  {
+    "Id": 11,
+    "Title": "Observability for Small Teams",
+    "Speaker": "Hana Sato",
+    "Track": "Web",
+    "StartsUtc": "\/Date(1805275800000)\/",
+    "DurationMinutes": 60,
+    "Room": "Hall B",
+    "Capacity": 60,
+    "Taken": 16
+  },
+  {
+    "Id": 12,
+    "Title": "EF Core Query Tuning",
+    "Speaker": "Ivan Hughes",
+    "Track": "Data",
+    "StartsUtc": "\/Date(1805280300000)\/",
+    "DurationMinutes": 60,
+    "Room": "Room 101",
+    "Capacity": 45,
+    "Taken": 16
+  },
+  {
+    "Id": 13,
+    "Title": "SQL Server Indexing Myths",
+    "Speaker": "Aisha Sharma",
+    "Track": "Architecture",
+    "StartsUtc": "\/Date(1805280300000)\/",
+    "DurationMinutes": 60,
+    "Room": "Hall A",
+    "Capacity": 12,
+    "Taken": 12
+  },
+  {
+    "Id": 14,
+    "Title": "Zero-Downtime Schema Changes",
+    "Speaker": "Ben Silva",
+    "Track": "Web",
+    "StartsUtc": "\/Date(1805284800000)\/",
+    "DurationMinutes": 60,
+    "Room": "Hall B",
+    "Capacity": 50,
+    "Taken": 8
+  },
+  {
+    "Id": 15,
+    "Title": "Streaming ETL Basics",
+    "Speaker": "Noor Ortega",
+    "Track": "Data",
+    "StartsUtc": "\/Date(1805290200000)\/",
+    "DurationMinutes": 60,
+    "Room": "Room 101",
+    "Capacity": 80,
+    "Taken": 11
+  },
+  {
+    "Id": 16,
+    "Title": "Data Contracts",
+    "Speaker": "Chen Wei",
+    "Track": "Architecture",
+    "StartsUtc": "\/Date(1805290200000)\/",
+    "DurationMinutes": 90,
+    "Room": "Hall A",
+    "Capacity": 35,
+    "Taken": 12
+  },
+  {
+    "Id": 17,
+    "Title": "Testing Legacy Code",
+    "Speaker": "Elena Tanaka",
+    "Track": "Web",
+    "StartsUtc": "\/Date(1805292000000)\/",
+    "DurationMinutes": 60,
+    "Room": "Hall B",
+    "Capacity": 90,
+    "Taken": 9
+  },
+  {
+    "Id": 18,
+    "Title": "Feature Flags in Anger",
+    "Speaker": "Lucas Fischer",
+    "Track": "Data",
+    "StartsUtc": "\/Date(1805296500000)\/",
+    "DurationMinutes": 45,
+    "Room": "Room 101",
+    "Capacity": 28,
+    "Taken": 5
+  },
+  {
+    "Id": 19,
+    "Title": "Reading Production Telemetry",
+    "Speaker": "Zara Rossi",
+    "Track": "Architecture",
+    "StartsUtc": "\/Date(1805297400000)\/",
+    "DurationMinutes": 60,
+    "Room": "Hall A",
+    "Capacity": 60,
+    "Taken": 2
+  },
+  {
+    "Id": 20,
+    "Title": "Retiring Dead Code",
+    "Speaker": "Jon Novak",
+    "Track": "Web",
+    "StartsUtc": "\/Date(1805301000000)\/",
+    "DurationMinutes": 30,
+    "Room": "Hall B",
+    "Capacity": 20,
+    "Taken": 1
+  }
+]

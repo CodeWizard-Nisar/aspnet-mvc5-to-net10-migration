@@ -158,21 +158,18 @@ Definition of done, by hand: register at `/Register/Step1` through to a referenc
 
 ## What was and was not verified in Phase 1
 
-Being explicit, because this phase was built in a Linux container with no Windows, IIS or SQL Server:
+Phase 1 was written without being able to run it. **Phase 2 then ran it for real** (Mono 6.8 + SQL Server 2025 on
+Linux; see [02-tests.md](02-tests.md)) and the open questions came back well:
 
-| Verified | How |
+| Was unverified in Phase 1 | Now |
 |---|---|
-| All four projects compile (net48) | `dotnet build ConfReg.sln` with net48 reference assemblies, 0 warnings |
-| Seed data satisfies every rule | `SeedPlan` is database-free; run on .NET 10: 200/20/3/150, no overbooked talk, no overlapping picks, no student without `.edu`, 1 full talk, 3 above 80% |
-| All 21 Razor views are syntactically valid | parsed with `Microsoft.AspNet.Razor` (parse only) |
+| EF6 creating and seeding the database | works, on first request |
+| Razor views compiling against their models | all render |
+| Behaviour of every controller action | pinned by 95 characterization tests |
 
-| **Not** verified | Why |
-|---|---|
-| The app running in IIS, end to end | needs Windows |
-| EF6 creating and seeding the database | no SQL Server (no Docker daemon in the build environment) |
-| Razor views compiling against their models | Razor compiles at first request under IIS |
-| Behaviour of any controller action | that is exactly what Phase 2's characterization tests are for |
+Still **not** verified: running under IIS on .NET Framework on Windows. Mono is a faithful but different
+implementation of System.Web, so the first Windows run of the suite is the real confirmation.
 
-Treat Phase 1 as "builds, and the logic that can be checked without infrastructure has been checked".
-The first run on a real Windows machine is the first real test, and the Phase 2 snapshots are only
-trustworthy once they have been generated against it.
+What Phase 1 itself verified, without infrastructure: all four projects compile against net48 reference assemblies
+with 0 warnings; the seed data satisfies every rule (200/20/3/150, no overbooked talk, no overlapping picks, no
+student without `.edu`, 1 full talk, 3 above 80%); all 21 Razor views parse.

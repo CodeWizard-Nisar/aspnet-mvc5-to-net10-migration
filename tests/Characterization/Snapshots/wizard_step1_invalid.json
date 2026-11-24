@@ -1,0 +1,14 @@
+{
+  "FirstName": null,
+  "LastName": null,
+  "Email": "not-an-email",
+  "Company": null,
+  "JobTitle": null,
+  "DietaryRequirements": null,
+  "Notice": null,
+  "Errors": [
+    "First name is required.",
+    "Last name is required.",
+    "A valid email address is required."
+  ]
+}

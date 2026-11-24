@@ -1,0 +1,29 @@
+{
+  "Id": 1,
+  "ReferenceCode": "CR-RDM8LZRS",
+  "Attendee": "Ivan Haddad",
+  "Email": "ivan.haddad1@uni0.edu",
+  "Company": null,
+  "TicketType": "Student",
+  "Status": "Paid",
+  "TotalAmount": 99.00,
+  "CreatedUtc": "\/Date(1795174440000)\/",
+  "ConfirmedUtc": "\/Date(1795174620000)\/",
+  "TalkTitles": [
+    "Minimal APIs at Scale",
+    "Strangler Fig in Practice"
+  ],
+  "Payments": [
+    {
+      "Id": 1,
+      "Amount": 99.00,
+      "Provider": "StubPay",
+      "ProviderRef": "STUB-SEED00001",
+      "Status": "Succeeded",
+      "ProcessedUtc": "\/Date(1795174620000)\/"
+    }
+  ],
+  "CanCancel": true,
+  "CanRefund": true,
+  "Notice": null
+}

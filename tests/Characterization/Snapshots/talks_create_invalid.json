@@ -1,0 +1,18 @@
+{
+  "Id": 0,
+  "Title": null,
+  "Speaker": null,
+  "Track": null,
+  "StartsUtc": "\/Date(1805360400000)\/",
+  "DurationMinutes": 1,
+  "Room": null,
+  "Capacity": 0,
+  "Errors": [
+    "The Title field is required.",
+    "The Speaker field is required.",
+    "The Track field is required.",
+    "The field DurationMinutes must be between 15 and 480.",
+    "The Room field is required.",
+    "The field Capacity must be between 1 and 10000."
+  ]
+}

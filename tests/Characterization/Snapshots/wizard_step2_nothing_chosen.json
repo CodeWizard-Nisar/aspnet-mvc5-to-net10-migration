@@ -1,0 +1,23 @@
+{
+  "TicketType": "",
+  "Options": [
+    {
+      "Type": "Standard",
+      "Name": "Standard ticket",
+      "Price": 299
+    },
+    {
+      "Type": "Workshop",
+      "Name": "Workshop ticket",
+      "Price": 499
+    },
+    {
+      "Type": "Student",
+      "Name": "Student ticket",
+      "Price": 99
+    }
+  ],
+  "Errors": [
+    "Please choose a ticket type."
+  ]
+}

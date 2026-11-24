@@ -1,0 +1,12 @@
+{
+  "ReferenceCode": "<REF>",
+  "Name": "Test Person",
+  "Email": "test.person@example.org",
+  "TicketType": "Standard",
+  "Status": "Paid",
+  "TotalAmount": 299.00,
+  "TalkTitles": [
+    "Designing for Failure",
+    "Strangler Fig in Practice"
+  ]
+}
