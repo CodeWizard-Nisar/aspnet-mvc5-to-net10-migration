@@ -5,8 +5,9 @@ namespace ConfReg.Data
 {
     public class ConfRegContext : DbContext
     {
-        // "ConfReg" is the connection string name in Web.config / App.config.
-        public ConfRegContext() : base("name=ConfReg") { }
+        // Phase 3: the connection string is passed in. Phase 1 used base("name=ConfReg"), which silently depended on
+        // Web.config and cannot work outside a .NET Framework app (BASELINE-PROBLEM #3).
+        public ConfRegContext(string connectionString) : base(connectionString) { }
 
         public DbSet<Attendee> Attendees { get; set; }
         public DbSet<Talk> Talks { get; set; }

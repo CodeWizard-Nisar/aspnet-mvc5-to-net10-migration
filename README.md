@@ -75,8 +75,11 @@ cold start, legacy against modern on the same dataset.
 ## Running locally
 
 ```bash
-docker compose up -d                       # SQL Server
-dotnet run --project src/Modern.Web
+cp .env.example .env && docker compose up -d     # SQL Server
+cp config/secrets.config.example src/Legacy.Web/secrets.config
+cp config/secrets.config.example src/Legacy.Service/secrets.config
+# Legacy.Web needs Windows + IIS Express, or tools/linux/host-legacy.sh (Mono) to try it elsewhere
+dotnet run --project src/Modern.Web              # arrives in Phase 5
 ```
 
 `Legacy.Web` targets net48 and needs Windows with IIS Express. CI runs the

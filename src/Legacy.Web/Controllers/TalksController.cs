@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Web.Mvc;
-using ConfReg.Data;
+using ConfReg.Data.Infrastructure;
 using ConfReg.Data.Services;
 using ConfReg.Domain.Entities;
 using ConfReg.Legacy.Models;
@@ -11,11 +11,15 @@ namespace ConfReg.Legacy.Controllers
     // No [Authorize]: see AdminController (BASELINE-PROBLEM #6).
     public class TalksController : AppController
     {
+        private readonly IConfRegContextFactory _db;
+        private readonly RegistrationService _registrations;
+        public TalksController(IConfRegContextFactory db, RegistrationService registrations) { _db = db; _registrations = registrations; }
+
         public ActionResult Index()
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
-                var seats = new RegistrationService().SeatsTaken(ctx);
+                var seats = _registrations.SeatsTaken(ctx);
                 var rows = ctx.Talks.OrderBy(t => t.StartsUtc).ThenBy(t => t.Id).ToList()
                     .Select(t => new TalkRow
                     {
@@ -39,7 +43,7 @@ namespace ConfReg.Legacy.Controllers
             Validate(form, null);
             if (form.Errors.Count > 0) return Respond(form);
 
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 ctx.Talks.Add(new Talk
                 {
@@ -54,7 +58,7 @@ namespace ConfReg.Legacy.Controllers
         [HttpGet]
         public ActionResult Edit(int id)
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var t = ctx.Talks.Find(id);
                 if (t == null) return HttpNotFound();
@@ -72,7 +76,7 @@ namespace ConfReg.Legacy.Controllers
             Validate(form, form.Id);
             if (form.Errors.Count > 0) return Respond(form);
 
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var t = ctx.Talks.Find(form.Id);
                 if (t == null) return HttpNotFound();
@@ -86,12 +90,12 @@ namespace ConfReg.Legacy.Controllers
         [HttpPost]
         public ActionResult Delete(int id)
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var t = ctx.Talks.Find(id);
                 if (t == null) return HttpNotFound();
 
-                var seats = new RegistrationService().SeatsTaken(ctx);
+                var seats = _registrations.SeatsTaken(ctx);
                 int holders = seats.ContainsKey(id) ? seats[id] : 0;
                 if (holders > 0)
                 {
@@ -116,9 +120,9 @@ namespace ConfReg.Legacy.Controllers
 
             if (id.HasValue && form.Errors.Count == 0)
             {
-                using (var ctx = new ConfRegContext())
+                using (var ctx = _db.Create())
                 {
-                    var seats = new RegistrationService().SeatsTaken(ctx);
+                    var seats = _registrations.SeatsTaken(ctx);
                     int taken = seats.ContainsKey(id.Value) ? seats[id.Value] : 0;
                     if (form.Capacity < taken)
                         form.Errors.Add("Capacity cannot be lower than the " + taken + " seat(s) already held or paid.");

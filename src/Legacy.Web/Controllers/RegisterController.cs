@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
 using System.Web.Mvc;
-using ConfReg.Data;
+using ConfReg.Data.Infrastructure;
 using ConfReg.Data.Services;
+using ConfReg.Domain.Abstractions;
 using ConfReg.Domain.Entities;
 using ConfReg.Domain.Rules;
 using ConfReg.Domain.Wizard;
@@ -20,8 +21,20 @@ namespace ConfReg.Legacy.Controllers
     /// </summary>
     public class RegisterController : AppController
     {
-        private readonly RegistrationService _registrations = new RegistrationService();
-        private readonly SettingsService _settings = new SettingsService();
+        private readonly RegistrationService _registrations;
+        private readonly SettingsService _settings;
+        private readonly WizardSession _wizard;
+        private readonly IConfRegContextFactory _db;
+        private readonly ISettings _appSettings;
+
+        public RegisterController(RegistrationService registrations, SettingsService settings, WizardSession wizard, IConfRegContextFactory db, ISettings appSettings)
+        {
+            _registrations = registrations;
+            _settings = settings;
+            _wizard = wizard;
+            _db = db;
+            _appSettings = appSettings;
+        }
 
         // ---------------- Step 1: attendee ----------------
 
@@ -31,7 +44,7 @@ namespace ConfReg.Legacy.Controllers
             if (!_settings.IsOpen())
                 return Respond(new ClosedModel { OpensUtc = _settings.OpensUtc, ClosesUtc = _settings.ClosesUtc }, "Closed");
 
-            var a = WizardSession.Current.Attendee;
+            var a = _wizard.Current.Attendee;
             var form = new Step1Form { Notice = TempData["Notice"] as string };
             if (a != null)
             {
@@ -51,7 +64,7 @@ namespace ConfReg.Legacy.Controllers
             if (!IsValidEmail(form.Email)) form.Errors.Add("A valid email address is required.");
             if (form.Errors.Count > 0) return Respond(form);
 
-            var state = WizardSession.Current;
+            var state = _wizard.Current;
             // Changing details invalidates any hold made for the old ones.
             _registrations.ReleaseHold(state);
             state.TicketType = null;
@@ -72,7 +85,7 @@ namespace ConfReg.Legacy.Controllers
         [HttpGet]
         public ActionResult Step2()
         {
-            var state = WizardSession.Current;
+            var state = _wizard.Current;
             if (state.Attendee == null) return RedirectToAction("Step1");
             return Respond(BuildStep2(state.TicketType));
         }
@@ -80,7 +93,7 @@ namespace ConfReg.Legacy.Controllers
         [HttpPost]
         public ActionResult Step2(string ticketType)
         {
-            var state = WizardSession.Current;
+            var state = _wizard.Current;
             if (state.Attendee == null) return RedirectToAction("Step1");
 
             TicketType parsed;
@@ -116,7 +129,7 @@ namespace ConfReg.Legacy.Controllers
         [HttpGet]
         public ActionResult Step3()
         {
-            var state = WizardSession.Current;
+            var state = _wizard.Current;
             if (state.Attendee == null) return RedirectToAction("Step1");
             if (state.TicketType == null) return RedirectToAction("Step2");
             return Respond(BuildStep3(state, state.SelectedTalks.Select(t => t.Id)));
@@ -125,7 +138,7 @@ namespace ConfReg.Legacy.Controllers
         [HttpPost]
         public ActionResult Step3(int[] talkIds)
         {
-            var state = WizardSession.Current;
+            var state = _wizard.Current;
             if (state.Attendee == null) return RedirectToAction("Step1");
             if (state.TicketType == null) return RedirectToAction("Step2");
 
@@ -142,13 +155,13 @@ namespace ConfReg.Legacy.Controllers
         private Step3Form BuildStep3(WizardState state, IEnumerable<int> selectedIds)
         {
             var selected = new HashSet<int>(selectedIds);
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var seats = _registrations.SeatsTaken(ctx);
                 var talks = ctx.Talks.OrderBy(t => t.StartsUtc).ThenBy(t => t.Id).ToList();
                 return new Step3Form
                 {
-                    MaxTalks = ConfReg.Domain.Services.HoldPolicy.MaxTalks,
+                    MaxTalks = _appSettings.MaxTalksPerRegistration,
                     Talks = talks.Select(t =>
                     {
                         int remaining = TalkRules.Remaining(t, seats);
@@ -171,7 +184,7 @@ namespace ConfReg.Legacy.Controllers
         [HttpGet]
         public ActionResult Step4()
         {
-            var state = WizardSession.Current;
+            var state = _wizard.Current;
             if (state.Registration == null) return RedirectToAction("Step3");
             return Respond(BuildStep4(state));
         }
@@ -179,14 +192,14 @@ namespace ConfReg.Legacy.Controllers
         [HttpPost]
         public ActionResult Step4(string cardNumber)
         {
-            var state = WizardSession.Current;
+            var state = _wizard.Current;
             if (state.Registration == null) return RedirectToAction("Step3");
 
             var outcome = _registrations.Pay(state, cardNumber);
             switch (outcome.Status)
             {
                 case PayStatus.Paid:
-                    WizardSession.Clear();
+                    _wizard.Clear();
                     return RedirectToAction("Confirmation", new { code = outcome.ReferenceCode });
 
                 case PayStatus.HoldExpired:
@@ -201,7 +214,7 @@ namespace ConfReg.Legacy.Controllers
             }
         }
 
-        private static Step4Form BuildStep4(WizardState state)
+        private Step4Form BuildStep4(WizardState state)
         {
             var reg = state.Registration;
             return new Step4Form
@@ -221,7 +234,7 @@ namespace ConfReg.Legacy.Controllers
         [HttpGet]
         public ActionResult Confirmation(string code)
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var reg = ctx.Registrations.Include("Attendee").Include("RegistrationTalks.Talk")
                     .FirstOrDefault(r => r.ReferenceCode == code);

@@ -17,6 +17,7 @@ namespace ConfReg.Domain.Wizard
     ///    re-Attach()es them, which is how a stale entity can overwrite fresher DB state.
     ///  - The session is a second copy of truth about the hold (HoldExpiresUtc) next to the
     ///    DB row the expiry job looks at.
+    /// STILL PRESENT after Phase 3 on purpose: Phase 3 moves WHERE session is reached from, not WHAT is kept in it.
     /// Fixed in Phase 5: replaced by a flat, serialisable WizardSnapshot of ids and primitives.
     /// </summary>
     public class WizardState

@@ -6,6 +6,9 @@ namespace ConfReg.Legacy.Controllers
 {
     public class AccountController : AppController
     {
+        private readonly AdminAuthService _auth;
+        public AccountController(AdminAuthService auth) { _auth = auth; }
+
         [HttpGet]
         public ActionResult Login(string returnUrl)
         {
@@ -15,7 +18,7 @@ namespace ConfReg.Legacy.Controllers
         [HttpPost]
         public ActionResult Login(LoginForm form)
         {
-            var user = new AdminAuthService().Validate(form.Email, form.Password);
+            var user = _auth.Validate(form.Email, form.Password);
             if (user == null)
             {
                 form.Password = null;

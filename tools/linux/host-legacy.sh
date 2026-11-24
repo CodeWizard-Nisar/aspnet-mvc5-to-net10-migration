@@ -12,6 +12,11 @@ stop() { pkill -f fastcgi-mono-server4 2>/dev/null || true; pkill -f "nginx -c $
 [ "${1:-}" = "stop" ] && { stop; echo stopped; exit 0; }
 stop
 
+# secrets.config is git-ignored; create it from the example on first use so the demo works out of the box.
+for d in Legacy.Web Legacy.Service; do
+  [ -f "$ROOT/src/$d/secrets.config" ] || cp "$ROOT/config/secrets.config.example" "$ROOT/src/$d/secrets.config"
+done
+
 dotnet build "$ROOT/src/Legacy.Web" -v q
 dotnet build "$ROOT/src/Legacy.Service" -v q
 

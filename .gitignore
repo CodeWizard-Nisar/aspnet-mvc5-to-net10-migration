@@ -7,3 +7,6 @@ obj/
 **/App_Data/*.log
 **/App_Data/exports/
 TestResults/
+
+secrets.config
+!config/secrets.config.example

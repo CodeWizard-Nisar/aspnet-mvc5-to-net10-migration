@@ -1,7 +1,6 @@
 using System;
-using System.Configuration;
 using System.IO;
-using System.Web;
+using ConfReg.Domain.Abstractions;
 
 namespace ConfReg.Domain.Services
 {
@@ -15,16 +14,29 @@ namespace ConfReg.Domain.Services
     /// <summary>
     /// Stubbed payment gateway. No real provider is called anywhere in this repo.
     /// A card number ending in 0002 is declined, anything else succeeds.
+    ///
+    /// Phase 3: the key comes from ISettings (was ConfigurationManager, #3/#4), and the audit line's client IP
+    /// and file location come from IClientInfo and IAppPaths (was HttpContext.Current, #1). Nothing here knows
+    /// whether it is running inside a web request.
     /// </summary>
     public class PaymentGateway
     {
+        private readonly ISettings _settings;
+        private readonly IClientInfo _client;
+        private readonly IAppPaths _paths;
+
+        public PaymentGateway(ISettings settings, IClientInfo client, IAppPaths paths)
+        {
+            _settings = settings;
+            _client = client;
+            _paths = paths;
+        }
+
         public PaymentResult Charge(decimal amount, string cardNumber, string referenceCode)
         {
-            // BASELINE-PROBLEM #3 and #4: the API key is read inline and sits in plain text in Web.config.
-            string apiKey = ConfigurationManager.AppSettings["Payment.ApiKey"];
-            if (string.IsNullOrEmpty(apiKey)) throw new InvalidOperationException("Payment.ApiKey is not configured.");
+            if (string.IsNullOrEmpty(_settings.PaymentApiKey)) throw new InvalidOperationException("ConfReg:PaymentApiKey is not configured.");
 
-            string digits = new string((cardNumber ?? "").ToCharArray()).Replace(" ", "");
+            string digits = (cardNumber ?? "").Replace(" ", "");
             bool declined = digits.EndsWith("0002");
 
             Audit(string.Format("CHARGE ref={0} amount={1:0.00} result={2}", referenceCode, amount, declined ? "DECLINED" : "OK"));
@@ -43,17 +55,11 @@ namespace ConfReg.Domain.Services
             return new PaymentResult { Success = true, ProviderRef = providerRef, Message = "Refunded" };
         }
 
-        private static void Audit(string message)
+        private void Audit(string message)
         {
-            // BASELINE-PROBLEM #1 (again): a payment gateway wrapper that needs a live web request,
-            // for two things that have nothing to do with payments:
-            //   Request.UserHostAddress   -> becomes IClientInfo in Phase 3
-            //   Server.MapPath("~/...")   -> becomes IAppPaths   in Phase 3
-            var ctx = HttpContext.Current;
-            string ip = ctx.Request.UserHostAddress;
-            string path = ctx.Server.MapPath("~/App_Data/payments.log");
+            string path = _paths.Resolve("~/App_Data/payments.log");
             Directory.CreateDirectory(Path.GetDirectoryName(path));
-            File.AppendAllText(path, DateTime.UtcNow.ToString("o") + " ip=" + ip + " " + message + Environment.NewLine);
+            File.AppendAllText(path, DateTime.UtcNow.ToString("o") + " ip=" + (_client.IpAddress ?? "-") + " " + message + Environment.NewLine);
         }
     }
 }

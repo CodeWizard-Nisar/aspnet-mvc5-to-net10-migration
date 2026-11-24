@@ -1,39 +1,36 @@
-using System.Web;
+using ConfReg.Domain.Abstractions;
 
 namespace ConfReg.Domain.Wizard
 {
     /// <summary>
-    /// BASELINE-PROBLEM #1: business logic reaching straight into HttpContext.Current.Session.
+    /// The wizard's view of the visitor's session.
     ///
-    /// Why it hurts:
-    ///  - Anything calling this needs an ASP.NET request in flight. The Windows Service, a
-    ///    background job or a unit test has no HttpContext.Current, so it is null and this throws.
-    ///  - System.Web does not exist on .NET 10, so this assembly cannot even load there.
-    ///  - It is hidden coupling: nothing in a method signature says "I need a web request".
-    /// Fixed in Phase 3: ISessionStore (legacy = HttpSessionState, modern = ISession).
+    /// Phase 1 (BASELINE-PROBLEM #1) this was a static class calling HttpContext.Current.Session. It is now an
+    /// ordinary object that is handed an ISessionStore. Behaviour is identical; what changed is that it no longer
+    /// needs a web request to exist, so it loads on .NET 10, runs in a unit test, and can be given a different
+    /// session technology (ASP.NET Core's ISession in Phase 5) without touching this file.
     /// </summary>
-    public static class WizardSession
+    public class WizardSession
     {
         private const string Key = "ConfReg.Wizard";
+        private readonly ISessionStore _session;
 
-        public static WizardState Current
+        public WizardSession(ISessionStore session) { _session = session; }
+
+        public WizardState Current
         {
             get
             {
-                var session = HttpContext.Current.Session;
-                var state = session[Key] as WizardState;
+                var state = _session.Get<WizardState>(Key);
                 if (state == null)
                 {
                     state = new WizardState();
-                    session[Key] = state;
+                    _session.Set(Key, state);
                 }
                 return state;
             }
         }
 
-        public static void Clear()
-        {
-            HttpContext.Current.Session.Remove(Key);
-        }
+        public void Clear() { _session.Remove(Key); }
     }
 }

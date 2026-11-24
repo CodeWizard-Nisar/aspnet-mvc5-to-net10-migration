@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
+using ConfReg.Data.Infrastructure;
+using ConfReg.Domain.Abstractions;
 using ConfReg.Domain.Entities;
-using ConfReg.Domain.Services;
 
 namespace ConfReg.Data.Services
 {
@@ -9,18 +10,26 @@ namespace ConfReg.Data.Services
     /// Expires unpaid registrations. "Freeing the seats" is simply flipping Status to Expired:
     /// seat counting ignores everything but Pending and Paid.
     ///
-    /// This is the one business-logic method the legacy Windows Service wraps
-    /// (BASELINE-PROBLEM #8). Replaced by a Quartz job in Phase 4.
+    /// Still wrapped by the legacy Windows Service (BASELINE-PROBLEM #8) until Phase 4 replaces that with a
+    /// Quartz job. Phase 3 changed only how this class gets its connection and its 30 minutes: both injected.
     /// </summary>
     public class ExpiryService
     {
+        private readonly IConfRegContextFactory _db;
+        private readonly ISettings _settings;
+
+        public ExpiryService(IConfRegContextFactory db, ISettings settings)
+        {
+            _db = db;
+            _settings = settings;
+        }
+
         public int ExpireUnpaid()
         {
-            // Untestable clock (extra problem): DateTime.UtcNow inline. Tests have to
-            // back-date CreatedUtc in the database instead of moving time.
-            DateTime cutoff = DateTime.UtcNow.AddMinutes(-HoldPolicy.Minutes);
+            // Untestable clock (extra problem E5, unchanged): DateTime.UtcNow inline.
+            DateTime cutoff = DateTime.UtcNow.AddMinutes(-_settings.HoldMinutes);
 
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var stale = ctx.Registrations
                     .Where(r => r.Status == RegistrationStatus.Pending && r.CreatedUtc < cutoff)

@@ -99,6 +99,24 @@ points at the caller, not here. **Fixed in Phase 3.**
 ### 10. No tests
 Intentional. **Phase 2 fixes this before anything else is touched.**
 
+## Status after Phase 3
+
+| # | Problem | Status |
+|---|---|---|
+| 1 | `HttpContext.Current` in business logic | **Fixed** (`ISessionStore`, `IClientInfo`, `IAppPaths`) |
+| 2 | Whole EF entities in Session | Open, Phase 5 |
+| 3 | Scattered `ConfigurationManager` reads | **Fixed** (`ISettings`; one loader) |
+| 4 | Secrets in `Web.config` | **Fixed** (`secrets.config` git-ignored, env vars) |
+| 5 | `Global.asax` wiring | Partly: wiring moved to a composition root; the file itself goes in Phase 5 |
+| 6 | No `[Authorize]`, layout redirect | Open, Phase 5 |
+| 7 | Reversible password encryption | **Fixed** (BCrypt, upgrade on next login) |
+| 8 | Windows Service | Open, Phase 4 |
+| 9 | Connection never closed | **Fixed** (regression test) |
+| 10 | No tests | **Fixed** in Phase 2 |
+
+Details in [03-libraries.md](03-libraries.md). The comments in the code keep the original `BASELINE-PROBLEM #n` tags,
+rewritten to say "fixed" where they are.
+
 ## Unplanned problems (found while writing it, documented rather than hidden)
 
 These are not in the brief's list. They appeared naturally and are real, so they are recorded here instead of

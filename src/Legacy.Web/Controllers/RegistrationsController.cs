@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Web.Mvc;
-using ConfReg.Data;
+using ConfReg.Data.Infrastructure;
 using ConfReg.Domain.Entities;
 using ConfReg.Domain.Services;
 using ConfReg.Legacy.Models;
@@ -12,9 +12,13 @@ namespace ConfReg.Legacy.Controllers
     // redirect, so they never reach a view, so the layout's login check never runs for them.
     public class RegistrationsController : AppController
     {
+        private readonly IConfRegContextFactory _db;
+        private readonly PaymentGateway _gateway;
+        public RegistrationsController(IConfRegContextFactory db, PaymentGateway gateway) { _db = db; _gateway = gateway; }
+
         public ActionResult Index(string status)
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var query = ctx.Registrations.AsQueryable();
                 RegistrationStatus s;
@@ -35,7 +39,7 @@ namespace ConfReg.Legacy.Controllers
 
         public ActionResult Details(int id)
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var r = ctx.Registrations.Include("Attendee").Include("RegistrationTalks.Talk").Include("Payments")
                     .FirstOrDefault(x => x.Id == id);
@@ -65,7 +69,7 @@ namespace ConfReg.Legacy.Controllers
         [HttpPost]
         public ActionResult Cancel(int id)
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var r = ctx.Registrations.Find(id);
                 if (r == null) return HttpNotFound();
@@ -84,7 +88,7 @@ namespace ConfReg.Legacy.Controllers
         [HttpPost]
         public ActionResult Refund(int id)
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var r = ctx.Registrations.Include("Payments").FirstOrDefault(x => x.Id == id);
                 if (r == null) return HttpNotFound();
@@ -96,8 +100,8 @@ namespace ConfReg.Legacy.Controllers
                     return RedirectToAction("Details", new { id });
                 }
 
-                // BASELINE-PROBLEM #1: the gateway wrapper needs HttpContext.Current (IP + MapPath for its audit log).
-                new PaymentGateway().Refund(payment.ProviderRef, payment.Amount);
+                // The gateway no longer needs a web request (BASELINE-PROBLEM #1, fixed): IClientInfo and IAppPaths are injected.
+                _gateway.Refund(payment.ProviderRef, payment.Amount);
                 payment.Status = PaymentStatus.Refunded;
                 if (r.Status == RegistrationStatus.Pending || r.Status == RegistrationStatus.Paid)
                     r.Status = RegistrationStatus.Cancelled;

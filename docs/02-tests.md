@@ -28,7 +28,7 @@ setting, `CONFREG_EXPIRY_CMD`, defaulting to `ConfReg.LegacyService.exe --once` 
 Service in this phase, the only production-code change made for the tests). In Phase 4 that one setting points at
 `Jobs.Worker`; the tests do not change.
 
-## What is covered (95 tests, 34 snapshot files)
+## What is covered (95 tests from Phase 2, 34 snapshot files; Phase 3 added 3 more in a new file)
 
 | Area | Tests |
 |---|---|
