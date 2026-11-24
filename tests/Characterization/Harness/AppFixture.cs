@@ -36,15 +36,23 @@ public sealed class AppFixture
     public void Reset() => Db.Exec(_seed);
 
     /// <summary>Runs the real expiry job once and returns how many registrations it expired.</summary>
-    public int RunExpiryJob()
+    public int RunExpiryJob() => int.Parse(RunJob("expire", "expired"));
+
+    /// <summary>Runs a real background job once (expire | emails | report) and returns the value of its result line.</summary>
+    public string RunJob(string job, string resultKey)
     {
-        var (file, args) = TestEnvironment.ExpiryCommand;
-        using var p = Process.Start(new ProcessStartInfo(file, args) { RedirectStandardOutput = true, RedirectStandardError = true })!;
+        var (file, args) = TestEnvironment.JobCommand(job);
+        var psi = new ProcessStartInfo(file, args) { RedirectStandardOutput = true, RedirectStandardError = true };
+        // The job reads the same ConfReg__* settings as the app. Point it at the database these tests reset.
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ConfReg__ConnectionString")))
+            psi.Environment["ConfReg__ConnectionString"] = TestEnvironment.SqlConnection;
+
+        using var p = Process.Start(psi)!;
         string stdout = p.StandardOutput.ReadToEnd(), stderr = p.StandardError.ReadToEnd();
         p.WaitForExit();
-        var line = stdout.Split('\n').FirstOrDefault(l => l.StartsWith("expired="));
+        var line = stdout.Split('\n').FirstOrDefault(l => l.StartsWith(resultKey + "="));
         if (p.ExitCode != 0 || line == null)
-            throw new InvalidOperationException($"Expiry job failed (exit {p.ExitCode}).\n{stdout}\n{stderr}");
-        return int.Parse(line["expired=".Length..].Trim());
+            throw new InvalidOperationException($"Job '{job}' failed (exit {p.ExitCode}). Build the solution first so the Worker exists.\n{stdout}\n{stderr}");
+        return line[(resultKey.Length + 1)..].Trim();
     }
 }

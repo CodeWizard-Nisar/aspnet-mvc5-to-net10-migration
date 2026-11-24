@@ -17,24 +17,22 @@ public static class TestEnvironment
         ?? "Server=localhost,1433;Database=ConfReg;User Id=sa;Password=ConfReg_Dev_Passw0rd!;TrustServerCertificate=True";
 
     /// <summary>
-    /// How to run the expiry job ONCE. It must print "expired=N". Phase 1 and 3: the Windows Service exe with
-    /// --once. Phase 4 changes this one setting to point at Jobs.Worker; the tests do not change.
+    /// How to run a background job ONCE; {job} is replaced by expire | emails | report. The command must print the job's
+    /// one-line result on stdout ("expired=N", "sent=N", "report=PATH").
+    ///
+    /// This is the single setting that moved between phases (the tests themselves never changed):
+    ///   Phases 1 to 3: the legacy Windows Service exe with --once (expiry only).
+    ///   Phase 4:       the .NET 10 Worker, `dotnet ConfReg.Jobs.Worker.dll --run-job {job}`.
+    /// The Phase 2 expiry tests passing unchanged against the Worker is the proof the migration kept behaviour.
     /// </summary>
-    public static (string File, string Args) ExpiryCommand
+    public static (string File, string Args) JobCommand(string job)
     {
-        get
-        {
-            var custom = Environment.GetEnvironmentVariable("CONFREG_EXPIRY_CMD");
-            if (!string.IsNullOrWhiteSpace(custom))
-            {
-                var parts = custom.Split(' ', 2);
-                return (parts[0], parts.Length > 1 ? parts[1] : "");
-            }
-            var exe = Path.Combine(RepoRoot, "src", "Legacy.Service", "bin", "Debug", "net48", "ConfReg.LegacyService.exe");
-            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? (exe, "--once")
-                : ("mono", $"\"{exe}\" --once"); // the net48 exe runs on Mono off Windows
-        }
+        var custom = Environment.GetEnvironmentVariable("CONFREG_JOB_CMD");
+        string template = !string.IsNullOrWhiteSpace(custom)
+            ? custom
+            : "dotnet \"" + Path.Combine(RepoRoot, "src", "Jobs.Worker", "bin", "Debug", "net10.0", "ConfReg.Jobs.Worker.dll") + "\" --run-job {job}";
+        var parts = template.Replace("{job}", job).Split(' ', 2);
+        return (parts[0], parts.Length > 1 ? parts[1] : "");
     }
 
     public static string RepoRoot

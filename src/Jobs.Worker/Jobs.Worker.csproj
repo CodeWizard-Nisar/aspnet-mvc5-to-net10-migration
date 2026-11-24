@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    ConfReg.Jobs.Worker: the three background jobs on .NET 10. Replaces the Windows Service (BASELINE-PROBLEM #8).
+    The Web SDK is used only so the process can host a tiny Kestrel endpoint for health checks; it serves no pages.
+    It references Shared.Data, which builds for net10.0 here and net48 for the legacy app: the same ExpiryService
+    that ran inside the Windows Service now runs here, which is the proof that the shared libraries are real.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ConfReg.Jobs</RootNamespace>
+    <AssemblyName>ConfReg.Jobs.Worker</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- net10-only project: opt out of the repo-wide C# 10 pin, which exists for the net48 libraries -->
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <!-- dotnet user-secrets (local development). Not a secret itself. -->
+    <UserSecretsId>7b0b2a0e-3f6a-4c58-9f1d-0c0f4e9a6b21</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="4.8.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.15" />
+    <ProjectReference Include="..\Shared.Data\Shared.Data.csproj" />
+  </ItemGroup>
+
+</Project>

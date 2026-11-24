@@ -99,7 +99,7 @@ points at the caller, not here. **Fixed in Phase 3.**
 ### 10. No tests
 Intentional. **Phase 2 fixes this before anything else is touched.**
 
-## Status after Phase 3
+## Status after Phase 4
 
 | # | Problem | Status |
 |---|---|---|
@@ -110,11 +110,11 @@ Intentional. **Phase 2 fixes this before anything else is touched.**
 | 5 | `Global.asax` wiring | Partly: wiring moved to a composition root; the file itself goes in Phase 5 |
 | 6 | No `[Authorize]`, layout redirect | Open, Phase 5 |
 | 7 | Reversible password encryption | **Fixed** (BCrypt, upgrade on next login) |
-| 8 | Windows Service | Open, Phase 4 |
+| 8 | Windows Service | **Fixed** (retired; replaced by `Jobs.Worker`, see [04-jobs.md](04-jobs.md)) |
 | 9 | Connection never closed | **Fixed** (regression test) |
 | 10 | No tests | **Fixed** in Phase 2 |
 
-Details in [03-libraries.md](03-libraries.md). The comments in the code keep the original `BASELINE-PROBLEM #n` tags,
+Details in [03-libraries.md](03-libraries.md) and [04-jobs.md](04-jobs.md). The comments in the code keep the original `BASELINE-PROBLEM #n` tags,
 rewritten to say "fixed" where they are.
 
 ## Unplanned problems (found while writing it, documented rather than hidden)
@@ -146,8 +146,8 @@ Two things the brief's entity list did not cover but the features need:
 
 ## Layout notes
 
-- `Legacy.Service` lives at `src/Legacy.Service` (not in the brief's layout) because it is a real, separate
-  legacy project. It is deleted in Phase 4 when `Jobs.Worker` replaces it.
+- `Legacy.Service` lived at `src/Legacy.Service` (not in the brief's layout) because it was a real, separate
+  legacy project. It was deleted in Phase 4 when `Jobs.Worker` replaced it (it is in git history).
 - `Shared.Domain` and `Shared.Data` are `net48` only for now. Multi-targeting is Phase 3.
 - Business logic that needs the database (`RegistrationService`, `ExpiryService`) is in `Shared.Data`, because
   `Shared.Data` references `Shared.Domain`, not the other way round. `Shared.Domain` holds entities, pure rules
@@ -165,7 +165,7 @@ dotnet build ConfReg.sln
 
 Then publish `src/Legacy.Web` (the `bin\`, `Views\`, `Web.config` and `Global.asax` it produces) as an IIS or
 IIS Express site. The first request creates and seeds the `ConfReg` database. To run the expiry service in a
-terminal: `src\Legacy.Service\bin\Debug\net48\ConfReg.LegacyService.exe --console`.
+terminal (as built in Phase 1; replaced in Phase 4 by `Jobs.Worker`, see [04-jobs.md](04-jobs.md)): `src\Legacy.Service\bin\Debug\net48\ConfReg.LegacyService.exe --console`.
 
 Demo admin logins (seeded, made-up): `admin@confreg.example` / `ConfReg-Demo-1!` and
 `staff@confreg.example` / `ConfReg-Demo-2!`.

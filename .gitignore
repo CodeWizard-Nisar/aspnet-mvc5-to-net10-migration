@@ -10,3 +10,6 @@ TestResults/
 
 secrets.config
 !config/secrets.config.example
+**/App_Data/outbox/
+**/App_Data/reports/
+**/logs/

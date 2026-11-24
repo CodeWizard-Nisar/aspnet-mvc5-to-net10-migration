@@ -23,10 +23,10 @@ It talks HTTP to `CONFREG_BASE_URL` and SQL to the database. The system under te
 | 5 | the YARP proxy fronting Legacy.Web and Modern.Web |
 | 7 | the same proxy, with the Talks/Registrations context on EF Core |
 
-The one place the tests must run code rather than make a request is the expiry job. That goes through a single
-setting, `CONFREG_EXPIRY_CMD`, defaulting to `ConfReg.LegacyService.exe --once` (a hook added to the Windows
-Service in this phase, the only production-code change made for the tests). In Phase 4 that one setting points at
-`Jobs.Worker`; the tests do not change.
+The one place the tests must run code rather than make a request is the background jobs. That goes through a single
+setting, `CONFREG_JOB_CMD` (`{job}` = expire | emails | report). Phases 2 and 3 it ran the legacy Windows Service with a
+`--once` hook added for the purpose; **since Phase 4 it runs the .NET 10 Worker** (`--run-job {job}`). The tests did not
+change, which is the point.
 
 ## What is covered (95 tests from Phase 2, 34 snapshot files; Phase 3 added 3 more in a new file)
 
@@ -89,14 +89,14 @@ set CONFREG_BASE_URL=http://localhost:5080
 dotnet test tests/Characterization
 ```
 
-**Linux or CI, no Windows:** `tools/linux/host-legacy.sh` hosts the same legacy build on Mono (FastCGI behind nginx)
+**Linux or CI, no Windows:** Build the solution first (the tests run jobs through the Worker). `tools/linux/host-legacy.sh` hosts the same legacy build on Mono (FastCGI behind nginx)
 on port 5080, then `dotnet test tests/Characterization` as above. This is how Phase 2 was built and run.
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `CONFREG_BASE_URL` | `http://localhost:5080` | app under test |
 | `CONFREG_TEST_SQL` | local SQL, `ConfReg` database, `sa` | **wiped and reloaded before every test; use a throwaway database** |
-| `CONFREG_EXPIRY_CMD` | legacy service exe `--once` | how to run the expiry job once |
+| `CONFREG_JOB_CMD` | `dotnet ...ConfReg.Jobs.Worker.dll --run-job {job}` | how to run a background job once; must print its result line |
 | `CONFREG_UPDATE_SNAPSHOTS` | unset | `1` rewrites snapshot files instead of comparing; review the diff |
 
 If the app is not reachable the fixture **fails loudly**; it never skips.

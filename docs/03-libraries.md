@@ -46,7 +46,7 @@ A missing secret fails loudly the first time it is used, with a message naming t
 a placeholder.
 
 **Secrets (#4).** `Web.config` no longer holds any. It pulls in `secrets.config` via `<appSettings file="...">`. Copy
-`config/secrets.config.example` to `src/Legacy.Web/secrets.config` and `src/Legacy.Service/secrets.config` (git-ignored).
+`config/secrets.config.example` to `src/Legacy.Web/secrets.config` (git-ignored; Phase 3 also copied it for `Legacy.Service`, which Phase 4 retired in favour of `Jobs.Worker`, configured by user-secrets or `ConfReg__*` variables).
 Every value in the example is a made-up demo placeholder. *The legacy host has no "user-secrets"* (that is a .NET Core
 tool), so a git-ignored file plus environment variables is the honest equivalent here; the modern hosts will use real
 user-secrets in Phases 4 and 5.
