@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using ConfReg.Data.Infrastructure;
+using ConfReg.Domain.Abstractions;
 using ConfReg.Domain.Entities;
 using ConfReg.Domain.Rules;
 using ConfReg.Domain.Services;
@@ -26,10 +28,23 @@ namespace ConfReg.Data.Services
     ///     count against talk capacity, so the seats really are held.
     ///   - The wizard remembers the hold in SESSION (WizardState.Registration / HoldExpiresUtc).
     ///   - The expiry job (ExpiryService) cannot see anyone's Session. It only sees the DB row, and
-    ///     expires Pending rows older than HoldPolicy.Minutes. Two clocks, two copies of the truth.
+    ///     expires Pending rows older than ISettings.HoldMinutes. Two clocks, two copies of the truth.
     /// </summary>
     public class RegistrationService
     {
+        private readonly IConfRegContextFactory _db;
+        private readonly ISettings _settings;
+        private readonly SettingsService _prices;
+        private readonly PaymentGateway _gateway;
+
+        public RegistrationService(IConfRegContextFactory db, ISettings settings, SettingsService prices, PaymentGateway gateway)
+        {
+            _db = db;
+            _settings = settings;
+            _prices = prices;
+            _gateway = gateway;
+        }
+
         /// <summary>Seats currently held per talk. Pending and Paid hold seats; Cancelled and Expired do not.</summary>
         public Dictionary<int, int> SeatsTaken(ConfRegContext ctx)
         {
@@ -51,7 +66,7 @@ namespace ConfReg.Data.Services
         /// </summary>
         public List<string> PlaceHold(WizardState state, IEnumerable<int> talkIds)
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 // Step back and re-submit: drop the previous hold first so its own seats
                 // do not count against this attempt.
@@ -59,7 +74,7 @@ namespace ConfReg.Data.Services
 
                 var ids = (talkIds ?? new int[0]).Distinct().ToList();
                 var talks = ctx.Talks.Where(t => ids.Contains(t.Id)).ToList();
-                var errors = TalkRules.Validate(talks, SeatsTaken(ctx), HoldPolicy.MaxTalks);
+                var errors = TalkRules.Validate(talks, SeatsTaken(ctx), _settings.MaxTalksPerRegistration);
                 if (errors.Count > 0) return errors;
 
                 // Re-use the Attendee row if this email registered before.
@@ -83,7 +98,7 @@ namespace ConfReg.Data.Services
                     Attendee = attendee,
                     TicketType = state.TicketType.Value,
                     Status = RegistrationStatus.Pending,
-                    TotalAmount = new SettingsService().PriceFor(state.TicketType.Value),
+                    TotalAmount = _prices.PriceFor(state.TicketType.Value),
                     CreatedUtc = DateTime.UtcNow,
                     RegistrationTalks = talks.Select(t => new RegistrationTalk { Talk = t }).ToList()
                 };
@@ -94,20 +109,20 @@ namespace ConfReg.Data.Services
                 state.Attendee = attendee;
                 state.SelectedTalks = talks;
                 state.Registration = reg;
-                state.HoldExpiresUtc = reg.CreatedUtc.AddMinutes(HoldPolicy.Minutes);
+                state.HoldExpiresUtc = reg.CreatedUtc.AddMinutes(_settings.HoldMinutes);
                 return errors;
             }
         }
 
         public void ReleaseHold(WizardState state)
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 ReleaseHold(ctx, state);
             }
         }
 
-        private static void ReleaseHold(ConfRegContext ctx, WizardState state)
+        private void ReleaseHold(ConfRegContext ctx, WizardState state)
         {
             if (state.Registration == null) return;
             int id = state.Registration.Id;
@@ -131,15 +146,15 @@ namespace ConfReg.Data.Services
             if (DateTime.UtcNow > state.HoldExpiresUtc.Value)
             {
                 ReleaseHold(state);
-                return new PayOutcome { Status = PayStatus.HoldExpired, Message = "Your seat hold expired after " + HoldPolicy.Minutes + " minutes. Please start again." };
+                return new PayOutcome { Status = PayStatus.HoldExpired, Message = "Your seat hold expired after " + _settings.HoldMinutes + " minutes. Please start again." };
             }
 
             var reg = state.Registration;
-            var result = new PaymentGateway().Charge(reg.TotalAmount, cardNumber, reg.ReferenceCode);
+            var result = _gateway.Charge(reg.TotalAmount, cardNumber, reg.ReferenceCode);
             if (!result.Success)
                 return new PayOutcome { Status = PayStatus.Declined, Message = result.Message };
 
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 // Extra problem: the entity in Session is a stale, detached copy. Attach() trusts it, and
                 // the UPDATE below writes Status=Paid over whatever the DB now says. If the expiry job has

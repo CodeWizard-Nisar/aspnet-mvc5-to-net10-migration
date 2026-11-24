@@ -1,19 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- Phase 1: net48 only. Phase 3 multi-targets this to net48;net10.0. -->
-    <TargetFramework>net48</TargetFramework>
+    <!-- Phase 3: multi-targeted. The SAME source now compiles for both runtimes, so the legacy app (net48)
+         and the new apps (net10.0) run identical business logic during the transition. -->
+    <TargetFrameworks>net48;net10.0</TargetFrameworks>
     <RootNamespace>ConfReg.Domain</RootNamespace>
     <AssemblyName>ConfReg.Domain</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- BASELINE-PROBLEM #1: a "domain" library that references System.Web.
-         This reference is the thing that stops this project from ever loading on .NET 10. -->
-    <Reference Include="System.Web" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <!-- Phase 3: NO System.Web and NO System.Configuration. That is the whole point of this phase:
+         nothing in here may depend on a web host or on Web.config. (Phase 1 referenced both; see
+         BASELINE-PROBLEM #1 and #3, now fixed.) DataAnnotations is built in on net10.0, a reference on net48. -->
+    <Reference Include="System.ComponentModel.DataAnnotations" Condition="'$(TargetFramework)' == 'net48'" />
     <PackageReference Include="EntityFramework" Version="6.5.1" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 
 </Project>

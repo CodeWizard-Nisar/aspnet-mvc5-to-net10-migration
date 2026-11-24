@@ -2,24 +2,25 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using ConfReg.Domain.Entities;
-using ConfReg.Domain.Services;
+using ConfReg.Domain.Security;
 
 namespace ConfReg.Data.Seed
 {
     /// <summary>
     /// Creates the database on first run and fills it with the demo data from SeedPlan.
-    /// Wired up in Global.asax (BASELINE-PROBLEM #5).
+    /// New databases get BCrypt admin passwords from day one; only databases created before Phase 3 have legacy ones.
     /// </summary>
     public class ConfRegInitializer : CreateDatabaseIfNotExists<ConfRegContext>
     {
+        private readonly IPasswordHasher _hasher;
+        public ConfRegInitializer(IPasswordHasher hasher) { _hasher = hasher; }
+
         protected override void Seed(ConfRegContext ctx)
         {
             List<AdminUser> admins;
             List<Setting> settings;
-            var plan = SeedPlan.Build(DateTime.UtcNow, PasswordCrypto.Encrypt, out admins, out settings);
+            var plan = SeedPlan.Build(DateTime.UtcNow, _hasher.Hash, out admins, out settings);
 
-            // Explicit Ids in the plan are ignored by the identity columns; insertion order
-            // preserves them (1..n) on a fresh database, which is all the seed relies on.
             ctx.Talks.AddRange(plan.Talks);
             ctx.Attendees.AddRange(plan.Attendees);
             ctx.SaveChanges();

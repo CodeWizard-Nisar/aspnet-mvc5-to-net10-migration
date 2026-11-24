@@ -77,9 +77,10 @@ latency, memory, cold start. Real measured numbers only.]
 ## Running it locally
 
 ```bash
-docker compose up -d        # SQL Server
-dotnet run --project src/Modern.Web
-# Legacy.Web requires Windows and IIS Express
+cp .env.example .env && docker compose up -d     # SQL Server
+cp config/secrets.config.example src/Legacy.Web/secrets.config
+cp config/secrets.config.example src/Legacy.Service/secrets.config
+# Legacy.Web needs Windows + IIS Express, or tools/linux/host-legacy.sh (Mono) to try it elsewhere
 ```
 
 Full setup in [docs/00-setup.md](docs/00-setup.md).

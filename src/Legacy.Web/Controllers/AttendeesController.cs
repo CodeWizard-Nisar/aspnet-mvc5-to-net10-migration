@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Web.Mvc;
 using ConfReg.Data;
+using ConfReg.Data.Infrastructure;
 using ConfReg.Domain.Entities;
 using ConfReg.Legacy.Models;
 
@@ -12,10 +13,12 @@ namespace ConfReg.Legacy.Controllers
     public class AttendeesController : AppController
     {
         private const int PageSize = 25;
+        private readonly IConfRegContextFactory _db;
+        public AttendeesController(IConfRegContextFactory db) { _db = db; }
 
         public ActionResult Index(string q, string ticket, string status, int page = 1)
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var query = Filter(ctx, q, ticket, status);
                 int total = query.Count();
@@ -33,7 +36,7 @@ namespace ConfReg.Legacy.Controllers
         // GET /Attendees/Export?q=...  -> CSV of the same filtered set, unpaged.
         public ActionResult Export(string q, string ticket, string status)
         {
-            using (var ctx = new ConfRegContext())
+            using (var ctx = _db.Create())
             {
                 var rows = Filter(ctx, q, ticket, status).OrderBy(r => r.LastName).ThenBy(r => r.FirstName).ThenBy(r => r.Id).ToList();
 

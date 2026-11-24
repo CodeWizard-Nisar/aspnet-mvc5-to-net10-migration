@@ -1,5 +1,4 @@
 using System;
-using System.Configuration;
 using System.ServiceProcess;
 using System.Timers;
 using ConfReg.Data.Services;
@@ -19,18 +18,20 @@ namespace ConfReg.LegacyService
     /// </summary>
     public class ExpiryWindowsService : ServiceBase
     {
+        private readonly ExpiryService _expiry;
+        private readonly double _intervalSeconds;
         private Timer _timer;
 
-        public ExpiryWindowsService()
+        public ExpiryWindowsService(ExpiryService expiry, double intervalSeconds)
         {
             ServiceName = "ConfRegExpiry";
+            _expiry = expiry;
+            _intervalSeconds = intervalSeconds;
         }
 
         protected override void OnStart(string[] args)
         {
-            // BASELINE-PROBLEM #3: yet another inline AppSettings read.
-            double seconds = double.Parse(ConfigurationManager.AppSettings["Service.IntervalSeconds"] ?? "60");
-            _timer = new Timer(seconds * 1000);
+            _timer = new Timer(_intervalSeconds * 1000);
             _timer.Elapsed += (s, e) => Tick();
             _timer.Start();
         }
@@ -53,7 +54,7 @@ namespace ConfReg.LegacyService
             try
             {
                 // The one wrapped method.
-                int expired = new ExpiryService().ExpireUnpaid();
+                int expired = _expiry.ExpireUnpaid();
                 if (expired > 0) EventLog.WriteEntry("Expired " + expired + " unpaid registration(s).");
             }
             catch (Exception ex)

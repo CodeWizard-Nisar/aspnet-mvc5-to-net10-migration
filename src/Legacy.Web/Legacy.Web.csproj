@@ -33,6 +33,8 @@
   <ItemGroup>
     <Content Include="Global.asax" />
     <Content Include="Web.config" />
+    <!-- secrets.config is git-ignored and created from config/secrets.config.example; ship it when it exists. -->
+    <Content Include="secrets.config" Condition="Exists('secrets.config')" />
     <Content Include="Views\**\*" />
     <Content Include="App_Data\.gitkeep" />
   </ItemGroup>

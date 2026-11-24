@@ -1,16 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- Phase 1: net48 only. Phase 3 multi-targets this to net48;net10.0. -->
-    <TargetFramework>net48</TargetFramework>
+    <TargetFrameworks>net48;net10.0</TargetFrameworks>
     <RootNamespace>ConfReg.Data</RootNamespace>
     <AssemblyName>ConfReg.Data</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="System.Configuration" />
+    <!-- EF6 stays. EF 6.5 supports .NET 10, so the data layer moves runtime WITHOUT being rewritten.
+         That is a deliberate sequencing choice (docs/03-libraries.md): change the runtime first, the ORM
+         later (Phase 7), so that when something breaks you know which of the two moves broke it. -->
     <PackageReference Include="EntityFramework" Version="6.5.1" />
     <ProjectReference Include="..\Shared.Domain\Shared.Domain.csproj" />
+  </ItemGroup>
+
+  <!-- The one place the old configuration system is allowed to live: .NET Framework only. It disappears from the
+       net10.0 build entirely, which is how we KNOW nothing modern depends on it. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Configuration" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net48'">
+    <Compile Remove="Configuration\AppConfigLoader.cs" />
   </ItemGroup>
 
 </Project>

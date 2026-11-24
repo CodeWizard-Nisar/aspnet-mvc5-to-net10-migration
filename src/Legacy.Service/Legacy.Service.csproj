@@ -10,6 +10,8 @@
   <ItemGroup>
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Configuration" />
+    <!-- git-ignored local secrets, copied next to the exe when present -->
+    <None Include="secrets.config" Condition="Exists('secrets.config')" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="..\Shared.Data\Shared.Data.csproj" />
   </ItemGroup>
 
