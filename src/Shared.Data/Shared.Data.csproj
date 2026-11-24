@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Phase 1: net48 only. Phase 3 multi-targets this to net48;net10.0. -->
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>ConfReg.Data</RootNamespace>
+    <AssemblyName>ConfReg.Data</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Configuration" />
+    <PackageReference Include="EntityFramework" Version="6.5.1" />
+    <ProjectReference Include="..\Shared.Domain\Shared.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,16 @@
+@model Step2Form
+@{ ViewBag.Title = "Step 2 of 4: Ticket"; }
+<h1>Step 2 of 4: Choose a ticket</h1>
+@Html.Partial("_Errors", Model.Errors)
+@using (Html.BeginForm("Step2", "Register", FormMethod.Post))
+{
+    foreach (var o in Model.Options)
+    {
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="radio" name="ticketType" id="t_@o.Type" value="@o.Type" @(Model.TicketType == o.Type ? "checked=\"checked\"" : "") />
+            <label class="form-check-label" for="t_@o.Type">@o.Name: $@o.Price.ToString("0.00")@(o.Type == "Student" ? " (requires an .edu email)" : "")</label>
+        </div>
+    }
+    <a class="btn btn-link" href="@Url.Action("Step1")">Back</a>
+    <button class="btn btn-primary" type="submit">Next: choose talks</button>
+}

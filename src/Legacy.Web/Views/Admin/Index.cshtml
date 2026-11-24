@@ -1,0 +1,21 @@
+@model DashboardModel
+@{ ViewBag.Title = "Dashboard"; Layout = "~/Views/Shared/_AdminLayout.cshtml"; }
+<h1>Dashboard</h1>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Paid today</div><div class="fs-2">@Model.PaidToday</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Paid total</div><div class="fs-2">@Model.PaidTotal</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Pending now</div><div class="fs-2">@Model.PendingNow</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Revenue</div><div class="fs-2">$@Model.TotalRevenue.ToString("N0")</div></div></div></div>
+</div>
+<h2 class="h5">Revenue by ticket type</h2>
+<table class="table table-sm w-auto"><thead><tr><th>Ticket</th><th>Paid</th><th>Revenue</th></tr></thead><tbody>
+@foreach (var r in Model.RevenueByTicket) { <tr><td>@r.TicketType</td><td>@r.Registrations</td><td>$@r.Revenue.ToString("N2")</td></tr> }
+</tbody></table>
+<h2 class="h5 mt-4">Capacity warnings (over 80% full)</h2>
+@if (Model.CapacityWarnings.Count == 0) { <p class="text-muted">None.</p> }
+else
+{
+    <table class="table table-sm w-auto"><thead><tr><th>Talk</th><th>Taken</th><th>Capacity</th><th>Full</th></tr></thead><tbody>
+    @foreach (var w in Model.CapacityWarnings) { <tr class="@(w.PercentFull >= 100 ? "table-danger" : "table-warning")"><td>@w.Title</td><td>@w.Taken</td><td>@w.Capacity</td><td>@w.PercentFull%</td></tr> }
+    </tbody></table>
+}

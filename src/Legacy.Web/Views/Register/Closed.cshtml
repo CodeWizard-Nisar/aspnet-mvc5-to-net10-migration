@@ -1,0 +1,4 @@
+@model ClosedModel
+@{ ViewBag.Title = "Registration closed"; }
+<h1>Registration is not open</h1>
+<p>Registration runs from @Model.OpensUtc.ToString("yyyy-MM-dd HH:mm") to @Model.ClosesUtc.ToString("yyyy-MM-dd HH:mm") UTC.</p>

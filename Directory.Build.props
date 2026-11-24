@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <!--
+    net48 reference assemblies as a NuGet package, so the legacy projects also
+    COMPILE on Linux/macOS CI. This only supplies compile-time references. Running
+    the legacy app still needs Windows (IIS Express / IIS) and the .NET Framework.
+  -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

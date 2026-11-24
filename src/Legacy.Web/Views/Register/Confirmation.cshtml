@@ -1,0 +1,6 @@
+@model ConfirmationModel
+@{ ViewBag.Title = "Confirmed"; }
+<h1>You are registered</h1>
+<p class="lead">Your reference code is <code class="fs-4">@Model.ReferenceCode</code></p>
+<p>@Model.Name, @Model.TicketType ticket, $@Model.TotalAmount.ToString("0.00"), status @Model.Status. A confirmation email goes to @Model.Email.</p>
+@if (Model.TalkTitles.Count > 0) { <ul>@foreach (var t in Model.TalkTitles) { <li>@t</li> }</ul> }

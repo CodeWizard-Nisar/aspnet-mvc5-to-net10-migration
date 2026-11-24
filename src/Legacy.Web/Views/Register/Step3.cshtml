@@ -1,0 +1,27 @@
+@model Step3Form
+@{ ViewBag.Title = "Step 3 of 4: Talks"; }
+<h1>Step 3 of 4: Choose up to @Model.MaxTalks talks</h1>
+<p class="text-muted">Choosing talks holds your seats. Talks that are full or overlap another choice cannot be selected together.</p>
+@Html.Partial("_Errors", Model.Errors)
+@using (Html.BeginForm("Step3", "Register", FormMethod.Post))
+{
+    <table class="table table-sm align-middle">
+        <thead><tr><th></th><th>Talk</th><th>Track</th><th>Starts (UTC)</th><th>Min</th><th>Room</th><th>Seats left</th></tr></thead>
+        <tbody>
+        @foreach (var t in Model.Talks)
+        {
+            <tr class="@(t.Full ? "text-muted" : "")">
+                <td><input type="checkbox" name="talkIds" value="@t.Id" @(t.Selected ? "checked=\"checked\"" : "") @(t.Full ? "disabled=\"disabled\"" : "") /></td>
+                <td>@t.Title <small class="text-muted">@t.Speaker</small></td>
+                <td>@t.Track</td>
+                <td>@t.StartsUtc.ToString("ddd HH:mm")</td>
+                <td>@t.DurationMinutes</td>
+                <td>@t.Room</td>
+                <td>@(t.Full ? "FULL" : t.Remaining.ToString())</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <a class="btn btn-link" href="@Url.Action("Step2")">Back</a>
+    <button class="btn btn-primary" type="submit">Hold seats and review</button>
+}
