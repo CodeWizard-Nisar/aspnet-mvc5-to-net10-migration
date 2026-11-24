@@ -1,0 +1,10 @@
+@model RegistrationList
+@{ ViewBag.Title = "Registrations"; Layout = "~/Views/Shared/_AdminLayout.cshtml"; }
+<h1>Registrations</h1>
+<p>@foreach (var s in new[] { "", "Pending", "Paid", "Cancelled", "Expired" }) { <a class="btn btn-sm @(Model.Status == (s == "" ? null : s) ? "btn-dark" : "btn-outline-dark")" href="@Url.Action("Index", new { status = s })">@(s == "" ? "All" : s)</a> }</p>
+<table class="table table-sm"><thead><tr><th>Reference</th><th>Attendee</th><th>Ticket</th><th>Status</th><th>Total</th><th>Created (UTC)</th></tr></thead><tbody>
+@foreach (var r in Model.Rows)
+{
+    <tr><td><a href="@Url.Action("Details", new { id = r.Id })">@r.ReferenceCode</a></td><td>@r.Attendee <small class="text-muted">@r.Email</small></td><td>@r.TicketType</td><td>@r.Status</td><td>$@r.TotalAmount.ToString("0.00")</td><td>@r.CreatedUtc.ToString("yyyy-MM-dd HH:mm")</td></tr>
+}
+</tbody></table>

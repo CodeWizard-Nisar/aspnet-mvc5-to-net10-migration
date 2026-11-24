@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ASP.NET MVC 5 on .NET Framework 4.8.
+
+    Honest note on the project format: classic System.Web apps normally use the old, verbose
+    .csproj (ProjectTypeGuids, Web Application targets). This one is SDK-style so it builds from
+    the command line and on Linux CI with `dotnet build`. It builds a normal MVC 5 assembly; to
+    run under IIS / IIS Express, publish the output (bin\, Views\, Web.config, Global.asax) as a site.
+    Razor views are compiled by IIS at first request, NOT at build time.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>ConfReg.Legacy</RootNamespace>
+    <AssemblyName>ConfReg.Legacy.Web</AssemblyName>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>bin\</OutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Web" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <PackageReference Include="Microsoft.AspNet.Mvc" Version="5.3.0" />
+    <ProjectReference Include="..\Shared.Data\Shared.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Global.asax" />
+    <Content Include="Web.config" />
+    <Content Include="Views\**\*" />
+    <Content Include="App_Data\.gitkeep" />
+  </ItemGroup>
+
+</Project>

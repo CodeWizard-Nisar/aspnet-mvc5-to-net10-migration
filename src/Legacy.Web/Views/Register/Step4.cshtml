@@ -1,0 +1,19 @@
+@model Step4Form
+@{ ViewBag.Title = "Step 4 of 4: Review and pay"; }
+<h1>Step 4 of 4: Review and pay</h1>
+<div class="alert alert-info">Your seats are held for another <strong>@(Model.SecondsRemaining / 60) min @(Model.SecondsRemaining % 60) s</strong>. After that the hold is released.</div>
+@Html.Partial("_Errors", Model.Errors)
+<dl class="row">
+    <dt class="col-sm-3">Name</dt><dd class="col-sm-9">@Model.Name</dd>
+    <dt class="col-sm-3">Email</dt><dd class="col-sm-9">@Model.Email</dd>
+    <dt class="col-sm-3">Ticket</dt><dd class="col-sm-9">@Model.TicketType</dd>
+    <dt class="col-sm-3">Talks</dt><dd class="col-sm-9">@(Model.TalkTitles.Count == 0 ? "None selected" : string.Join(", ", Model.TalkTitles))</dd>
+    <dt class="col-sm-3">Total</dt><dd class="col-sm-9"><strong>$@Model.TotalAmount.ToString("0.00")</strong></dd>
+</dl>
+@using (Html.BeginForm("Step4", "Register", FormMethod.Post))
+{
+    <label class="form-label">Card number (stub gateway: any number works; one ending 0002 is declined)</label>
+    <input class="form-control mb-3" name="cardNumber" value="4242 4242 4242 4242" autocomplete="off" />
+    <a class="btn btn-link" href="@Url.Action("Step3")">Back</a>
+    <button class="btn btn-success" type="submit">Pay $@Model.TotalAmount.ToString("0.00")</button>
+}

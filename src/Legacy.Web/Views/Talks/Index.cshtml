@@ -1,0 +1,14 @@
+@model System.Collections.Generic.List<TalkRow>
+@{ ViewBag.Title = "Talks"; Layout = "~/Views/Shared/_AdminLayout.cshtml"; }
+<h1>Talks <a class="btn btn-sm btn-primary" href="@Url.Action("Create")">Add talk</a></h1>
+@if (TempData["Notice"] != null) { <div class="alert alert-warning">@TempData["Notice"]</div> }
+<table class="table table-sm align-middle"><thead><tr><th>Talk</th><th>Track</th><th>Starts (UTC)</th><th>Min</th><th>Room</th><th>Taken / Capacity</th><th></th></tr></thead><tbody>
+@foreach (var t in Model)
+{
+    <tr><td>@t.Title <small class="text-muted">@t.Speaker</small></td><td>@t.Track</td><td>@t.StartsUtc.ToString("yyyy-MM-dd HH:mm")</td><td>@t.DurationMinutes</td><td>@t.Room</td><td>@t.Taken / @t.Capacity</td>
+    <td><a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Edit", new { id = t.Id })">Edit</a>
+        @using (Html.BeginForm("Delete", "Talks", new { id = t.Id }, FormMethod.Post, new { style = "display:inline", onsubmit = "return confirm('Delete this talk?');" }))
+        { <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button> }
+    </td></tr>
+}
+</tbody></table>

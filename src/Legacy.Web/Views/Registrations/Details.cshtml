@@ -1,0 +1,24 @@
+@model RegistrationDetail
+@{ ViewBag.Title = "Registration " + Model.ReferenceCode; Layout = "~/Views/Shared/_AdminLayout.cshtml"; }
+<h1>Registration <code>@Model.ReferenceCode</code></h1>
+@if (!string.IsNullOrEmpty(Model.Notice)) { <div class="alert alert-success">@Model.Notice</div> }
+<dl class="row">
+    <dt class="col-sm-3">Attendee</dt><dd class="col-sm-9">@Model.Attendee (@Model.Email) @Model.Company</dd>
+    <dt class="col-sm-3">Ticket</dt><dd class="col-sm-9">@Model.TicketType, $@Model.TotalAmount.ToString("0.00")</dd>
+    <dt class="col-sm-3">Status</dt><dd class="col-sm-9"><strong>@Model.Status</strong></dd>
+    <dt class="col-sm-3">Created</dt><dd class="col-sm-9">@Model.CreatedUtc.ToString("yyyy-MM-dd HH:mm") UTC</dd>
+    <dt class="col-sm-3">Talks</dt><dd class="col-sm-9">@(Model.TalkTitles.Count == 0 ? "None" : string.Join(", ", Model.TalkTitles))</dd>
+</dl>
+<h2 class="h5">Payments</h2>
+<table class="table table-sm w-auto"><thead><tr><th>Amount</th><th>Provider ref</th><th>Status</th><th>Processed (UTC)</th></tr></thead><tbody>
+@foreach (var p in Model.Payments) { <tr><td>$@p.Amount.ToString("0.00")</td><td>@p.ProviderRef</td><td>@p.Status</td><td>@p.ProcessedUtc.ToString("yyyy-MM-dd HH:mm")</td></tr> }
+</tbody></table>
+@if (Model.CanCancel)
+{
+    using (Html.BeginForm("Cancel", "Registrations", new { id = Model.Id }, FormMethod.Post, new { style = "display:inline" })) { <button class="btn btn-warning" type="submit">Cancel registration</button> }
+}
+@if (Model.CanRefund)
+{
+    using (Html.BeginForm("Refund", "Registrations", new { id = Model.Id }, FormMethod.Post, new { style = "display:inline" })) { <button class="btn btn-danger" type="submit">Refund and cancel</button> }
+}
+<a class="btn btn-link" href="@Url.Action("Index")">Back to list</a>

@@ -1,0 +1,4 @@
+@model TalkForm
+@{ ViewBag.Title = "Edit talk"; Layout = "~/Views/Shared/_AdminLayout.cshtml"; }
+<h1>Edit talk</h1>
+@using (Html.BeginForm("Edit", "Talks", FormMethod.Post)) { @Html.Partial("_TalkForm", Model) }

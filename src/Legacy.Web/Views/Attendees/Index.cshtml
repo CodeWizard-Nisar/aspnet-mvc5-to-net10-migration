@@ -1,0 +1,28 @@
+@model AttendeeList
+@{ ViewBag.Title = "Attendees"; Layout = "~/Views/Shared/_AdminLayout.cshtml"; }
+<h1>Attendees <small class="text-muted fs-6">@Model.Total found</small></h1>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4"><input class="form-control" name="q" placeholder="Name, email or company" value="@Model.Q" /></div>
+    <div class="col-md-2"><select class="form-select" name="ticket"><option value="">Any ticket</option>
+        @foreach (var t in new[] { "Standard", "Workshop", "Student" }) { <option value="@t" @(Model.Ticket == t ? "selected=\"selected\"" : "")>@t</option> }
+    </select></div>
+    <div class="col-md-2"><select class="form-select" name="status"><option value="">Any status</option>
+        @foreach (var s in new[] { "Pending", "Paid", "Cancelled", "Expired" }) { <option value="@s" @(Model.Status == s ? "selected=\"selected\"" : "")>@s</option> }
+    </select></div>
+    <div class="col-md-4"><button class="btn btn-primary" type="submit">Filter</button>
+        <a class="btn btn-outline-secondary" href="@Url.Action("Export", new { q = Model.Q, ticket = Model.Ticket, status = Model.Status })">Export CSV</a></div>
+</form>
+<table class="table table-sm"><thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Ticket</th><th>Status</th><th>Reference</th></tr></thead><tbody>
+@foreach (var r in Model.Rows)
+{
+    <tr><td>@r.FirstName @r.LastName</td><td>@r.Email</td><td>@r.Company</td><td>@r.Ticket</td><td>@r.Status</td><td>@r.ReferenceCode</td></tr>
+}
+</tbody></table>
+@{ int pages = (int)System.Math.Ceiling(Model.Total / (double)Model.PageSize); }
+@if (pages > 1)
+{
+    <nav>Page @Model.Page of @pages
+    @if (Model.Page > 1) { <a href="@Url.Action("Index", new { q = Model.Q, ticket = Model.Ticket, status = Model.Status, page = Model.Page - 1 })">prev</a> }
+    @if (Model.Page < pages) { <a href="@Url.Action("Index", new { q = Model.Q, ticket = Model.Ticket, status = Model.Status, page = Model.Page + 1 })">next</a> }
+    </nav>
+}
