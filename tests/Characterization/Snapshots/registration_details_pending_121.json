@@ -1,0 +1,22 @@
+{
+  "Id": 121,
+  "ReferenceCode": "CR-CAVX6D29",
+  "Attendee": "Mateo Moreau",
+  "Email": "mateo.moreau121@example.org",
+  "Company": "Wingtip Systems",
+  "TicketType": "Standard",
+  "Status": "Pending",
+  "TotalAmount": 299.00,
+  "CreatedUtc": "\/Date(1795175880000)\/",
+  "ConfirmedUtc": null,
+  "TalkTitles": [
+    "Designing for Failure",
+    "Minimal APIs at Scale",
+    "Razor Pages vs MVC",
+    "Streaming ETL Basics"
+  ],
+  "Payments": [],
+  "CanCancel": true,
+  "CanRefund": false,
+  "Notice": null
+}

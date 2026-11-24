@@ -1,0 +1,12 @@
+{
+  "ReferenceCode": "CR-RDM8LZRS",
+  "Name": "Ivan Haddad",
+  "Email": "ivan.haddad1@uni0.edu",
+  "TicketType": "Student",
+  "Status": "Paid",
+  "TotalAmount": 99.00,
+  "TalkTitles": [
+    "Minimal APIs at Scale",
+    "Strangler Fig in Practice"
+  ]
+}

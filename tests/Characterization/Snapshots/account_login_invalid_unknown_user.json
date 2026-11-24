@@ -1,0 +1,8 @@
+{
+  "Email": "nobody@confreg.example",
+  "Password": null,
+  "ReturnUrl": null,
+  "Errors": [
+    "Invalid email or password."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "Name": "Test Person",
+  "Email": "test.person@example.org",
+  "TicketType": "Workshop",
+  "TotalAmount": 499,
+  "TalkTitles": [
+    "Strangler Fig in Practice",
+    "Designing for Failure"
+  ],
+  "SecondsRemaining": "<SECS>",
+  "ReferenceCode": "<REF>",
+  "Errors": []
+}

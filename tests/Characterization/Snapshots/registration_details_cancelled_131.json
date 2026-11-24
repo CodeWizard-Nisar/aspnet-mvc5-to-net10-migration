@@ -1,0 +1,31 @@
+{
+  "Id": 131,
+  "ReferenceCode": "CR-GFR2SM6D",
+  "Attendee": "Ivan Lindqvist",
+  "Email": "ivan.lindqvist131@example.org",
+  "Company": "Proseware",
+  "TicketType": "Workshop",
+  "Status": "Cancelled",
+  "TotalAmount": 499.00,
+  "CreatedUtc": "\/Date(1793935320000)\/",
+  "ConfirmedUtc": "\/Date(1793935500000)\/",
+  "TalkTitles": [
+    "Auth Beyond Cookies",
+    "Cutting Over Without Downtime",
+    "EF Core Query Tuning",
+    "Event Sourcing Without Tears"
+  ],
+  "Payments": [
+    {
+      "Id": 121,
+      "Amount": 499.00,
+      "Provider": "StubPay",
+      "ProviderRef": "STUB-SEED00131",
+      "Status": "Refunded",
+      "ProcessedUtc": "\/Date(1793935500000)\/"
+    }
+  ],
+  "CanCancel": false,
+  "CanRefund": false,
+  "Notice": null
+}

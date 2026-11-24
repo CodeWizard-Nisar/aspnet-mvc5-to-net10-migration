@@ -18,6 +18,8 @@
     <OutputPath>bin\</OutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <!-- Copy EF, MVC, etc. into bin\ next to the assembly, as IIS (and any other host) needs them. -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>

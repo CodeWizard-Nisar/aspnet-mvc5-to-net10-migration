@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Dev tool (not part of the product). Renders SeedPlan, the same code the app seeds from, as a SQL script
+    with a FIXED clock, so the characterization tests start from byte-identical data on every machine and
+    on every runtime. Regenerate with: dotnet run, in tools/SeedSql
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="EntityFramework" Version="6.5.1" />
+    <Compile Include="..\..\src\Shared.Domain\Entities\*.cs" />
+    <Compile Include="..\..\src\Shared.Domain\Rules\*.cs" />
+    <Compile Include="..\..\src\Shared.Data\Seed\SeedPlan.cs" />
+  </ItemGroup>
+</Project>
