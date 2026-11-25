@@ -79,6 +79,29 @@ With the legacy app running, start `Modern.Web` with `Auth__AcceptLegacySession=
 `Account` page on Legacy, which is the normal mid-migration state: sign in on .NET Framework, browse admin pages on
 .NET 10. See [05-strangler.md](05-strangler.md).
 
+## Troubleshooting
+
+### `error MSB3027` / `MSB3021`: "The file is locked by: ConfReg.Gateway" (or ConfReg.Modern.Web)
+
+The app is still running from a previous run, and a running .NET process holds its own assemblies open, so the build
+cannot overwrite them. Nothing is wrong with the code; every project compiles. The accompanying flood of `MSB3026`
+warnings is the same copy being retried ten times, not ten separate problems.
+
+```powershell
+.\tools\windows\run-stack.ps1 -Stop
+```
+
+or, without the script:
+
+```powershell
+Get-Process | Where-Object { $_.ProcessName -like 'ConfReg*' } | Stop-Process -Force
+```
+
+`run-stack.ps1` now stops previous instances before it builds, so this should not recur.
+
+IIS Express does not need stopping for a rebuild: ASP.NET shadow-copies assemblies, so it does not lock
+`src\Legacy.Web\bin`.
+
 ## IIS troubleshooting
 
 ### `HTTP 403.14 - Forbidden` on `/`, or `HTTP 404.0` on `/Home/Index`, with `Handler: StaticFile`
