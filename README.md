@@ -74,35 +74,26 @@ cold start, legacy against modern on the same dataset.
 
 ## Running locally
 
-```bash
-cp .env.example .env && docker compose up -d     # SQL Server
-cp config/secrets.config.example src/Legacy.Web/secrets.config
+Full instructions, including IIS troubleshooting: **[docs/00-setup.md](docs/00-setup.md)**.
+
+The quickest look, on Windows, with no IIS needed (the admin portal is the part that has been migrated, so it runs on
+.NET 10; you only lose the public wizard):
+
+```powershell
+.\tools\windows\run-stack.ps1 -SkipLegacy
 ```
 
-All three web processes at once, with the gateway as the only front door:
+Everything, including the public wizard on .NET Framework 4.8 under IIS Express:
 
-```bash
-tools/linux/host-stack.sh        # gateway :5000, Legacy.Web :5080, Modern.Web :5100
+```powershell
+.\tools\windows\run-stack.ps1
 ```
 
-Then browse <http://localhost:5000>. `GET /gateway/routes` says which app is serving each page, and
-`Migration:Pages:<Page>=Legacy|Modern` moves a page across or back:
+Then browse <http://localhost:5000> — the gateway is the only address a user should use. `/gateway/routes` shows which
+app owns each page, and `Migration:Pages:<Page>=Legacy|Modern` moves a page across or back.
 
-```bash
-MIGRATION_PAGES='Talks=Legacy' AUTH_ACCEPT_LEGACY_SESSION=true tools/linux/host-stack.sh
-```
-
-The background jobs are a separate process:
-
-```bash
-dotnet user-secrets set "ConfReg:ConnectionString" "..." --project src/Jobs.Worker
-dotnet run --project src/Jobs.Worker             # health on :5090/health
-```
-
-`Legacy.Web` targets net48 and is meant to run on IIS or IIS Express on Windows. `tools/linux/host-stack.sh` hosts it on
-Mono so the suite can run on Linux and in CI; what that does and does not prove is in
-[tools/linux/README.md](tools/linux/README.md) and the honesty section of
-[docs/05-strangler.md](docs/05-strangler.md). Full setup in [docs/00-setup.md](docs/00-setup.md).
+On Linux or macOS the .NET 10 projects run normally; `Legacy.Web` needs Windows, or the Mono test harness in
+[tools/linux/README.md](tools/linux/README.md), which is a stand-in for IIS and not a deployment story.
 
 ## Tests
 

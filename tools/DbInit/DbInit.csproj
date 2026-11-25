@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Creates and seeds the ConfReg database from the command line, on .NET 10, using the same EF6 initializer and the same
+    SeedPlan the legacy app uses. It exists so that seeing the application does not depend on getting IIS Express working
+    first: Legacy.Web owns creating the database at runtime (by design, see docs), which used to mean the hardest
+    prerequisite gated the easiest thing to look at.
+
+    Run with: dotnet run, in tools/DbInit
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <AssemblyName>ConfReg.DbInit</AssemblyName>
+    <RootNamespace>ConfReg.DbInit</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Shared.Data\Shared.Data.csproj" />
+  </ItemGroup>
+
+</Project>
