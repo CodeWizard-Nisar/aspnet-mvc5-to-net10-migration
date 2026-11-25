@@ -13,3 +13,8 @@ secrets.config
 **/App_Data/outbox/
 **/App_Data/reports/
 **/logs/
+
+# Benchmark run output. Live/partial files; the measured numbers that matter are written up in docs/06-results.md
+# with the raw evidence committed under docs/results/.
+tools/bench/results/
+tools/bench/**/BenchmarkDotNet.Artifacts/
