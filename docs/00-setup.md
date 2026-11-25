@@ -81,6 +81,19 @@ With the legacy app running, start `Modern.Web` with `Auth__AcceptLegacySession=
 
 ## Troubleshooting
 
+### `502 Bad Gateway`, or a socket error mentioning `localhost:5080`
+
+The gateway is running, but the app a page is routed to is not. The gateway now answers with a plain explanation
+naming the app, the cluster and the fix. The usual case is `Legacy.Web` not running, which affects the public wizard
+and anything else not yet migrated; every page already on `Modern.Web` keeps working, which is the point of routing
+per page.
+
+Either start `Legacy.Web` under IIS Express, or skip it and use the .NET 10 admin portal:
+
+```powershell
+.\tools\windows\run-stack.ps1 -SkipLegacy
+```
+
 ### `ERR_CONNECTION_REFUSED` on http://localhost:5000, and the windows closed immediately
 
 The apps died on startup. The usual cause, now fixed, was a **repository path containing a space** (such as
