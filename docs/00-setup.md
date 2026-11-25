@@ -81,6 +81,19 @@ With the legacy app running, start `Modern.Web` with `Auth__AcceptLegacySession=
 
 ## Troubleshooting
 
+### `ERR_CONNECTION_REFUSED` on http://localhost:5000, and the windows closed immediately
+
+The apps died on startup. The usual cause, now fixed, was a **repository path containing a space** (such as
+`D:\New folder\...`): PowerShell's `Start-Process -ArgumentList` does not quote its entries, so `dotnet` was handed a
+truncated `--project D:\New` and exited instantly, leaving no visible error. `run-stack.ps1` now launches each app with
+`-WorkingDirectory` instead, and waits for both to answer before printing any URL.
+
+To see a startup error directly, run one in the foreground from the repository root (a relative path has no space):
+
+```powershell
+dotnet run -c Release --project src\Gateway
+```
+
 ### `error MSB3027` / `MSB3021`: "The file is locked by: ConfReg.Gateway" (or ConfReg.Modern.Web)
 
 The app is still running from a previous run, and a running .NET process holds its own assemblies open, so the build

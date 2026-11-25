@@ -55,6 +55,31 @@ function Stop-ConfReg([switch]$IncludeIis) {
   Start-Sleep -Milliseconds 500   # let Windows release the file handles before MSBuild tries to overwrite them
 }
 
+# Start "dotnet run" for a project in its OWN window.
+# -WorkingDirectory is passed as a parameter rather than on the command line, so a repository path containing a space
+# (for example "D:\New folder\...") cannot break it. Start-Process does NOT quote -ArgumentList entries, so passing
+# --project <path-with-space> silently handed dotnet a truncated path and the window died instantly, which looked like
+# "localhost refused to connect" with no error anywhere.
+function Start-App([string]$projectDir) {
+  if (-not (Test-Path $projectDir)) { throw "Project directory not found: $projectDir" }
+  Start-Process -FilePath 'dotnet' -ArgumentList @('run', '-c', 'Release') -WorkingDirectory $projectDir
+}
+
+# Poll a URL until it answers, so a process that died on startup is reported here instead of in the browser.
+function Wait-Until([string]$url, [string]$label, [string]$projectDir, [int]$seconds = 40) {
+  for ($i = 0; $i -lt $seconds; $i++) {
+    try {
+      Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 2 | Out-Null
+      Write-Host "  $label is up" -ForegroundColor Green
+      return $true
+    } catch { Start-Sleep -Seconds 1 }
+  }
+  Write-Warning "$label did not come up at $url."
+  Write-Warning 'Read the error in its own window, or run it in the foreground to see it:'
+  Write-Warning "    dotnet run -c Release --project $projectDir"
+  return $false
+}
+
 if ($Stop) {
   Step 'Stopping ConfReg processes'
   Stop-ConfReg -IncludeIis
@@ -92,21 +117,31 @@ if (-not $SkipLegacy) {
     $SkipLegacy = $true
   } else {
     Step 'Legacy.Web on IIS Express (http://localhost:5080)'
-    Start-Process -FilePath $IisExpress -ArgumentList @("/path:$(Join-Path $root 'src\Legacy.Web')", '/port:5080')
+    # The path is quoted explicitly: Start-Process does not quote -ArgumentList entries, and the repository path may
+    # contain a space.
+    $sitePath = Join-Path $root 'src\Legacy.Web'
+    Start-Process -FilePath $IisExpress -ArgumentList @("/path:`"$sitePath`"", '/port:5080')
   }
 }
 
 Step 'Modern.Web (http://localhost:5100)'
 # While the login page still lives on Legacy.Web, Modern.Web accepts that login via the shared session.
 [Environment]::SetEnvironmentVariable('Auth__AcceptLegacySession', $(if ($SkipLegacy) { 'false' } else { 'true' }))
-Start-Process -FilePath 'dotnet' -ArgumentList @('run','-c','Release','--project',(Join-Path $root 'src\Modern.Web'))
+Start-App (Join-Path $root 'src\Modern.Web')
 
 Step 'Gateway (http://localhost:5000)'
 # Without Legacy.Web there is nowhere to log in, so the login page has to come from Modern.Web.
 if ($SkipLegacy) { [Environment]::SetEnvironmentVariable('Migration__Pages__Account', 'Modern') }
-Start-Process -FilePath 'dotnet' -ArgumentList @('run','-c','Release','--project',(Join-Path $root 'src\Gateway'))
+Start-App (Join-Path $root 'src\Gateway')
 
-Write-Host "`nStarting up. Give it a few seconds, then open:" -ForegroundColor Green
+Step 'Waiting for the apps to answer'
+$modernUp  = Wait-Until 'http://localhost:5100/health/live'   'Modern.Web' 'src\Modern.Web'
+$gatewayUp = Wait-Until 'http://localhost:5000/gateway/health' 'Gateway'    'src\Gateway'
+if (-not ($modernUp -and $gatewayUp)) {
+  Write-Warning 'The stack is not fully up. The URLs below will not work until the errors above are resolved.'
+}
+
+Write-Host "`nOpen:" -ForegroundColor Green
 Write-Host '  http://localhost:5000/Admin           admin portal  (served by .NET 10)'
 if (-not $SkipLegacy) { Write-Host '  http://localhost:5000/Register/Step1  public wizard (served by .NET Framework 4.8)' }
 Write-Host '  http://localhost:5000/gateway/routes  which app owns each page'
