@@ -21,6 +21,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="$ROOT/tools/bench/results"
+CONFIG="${CONFIG:-Debug}"
 mkdir -p "$OUT"
 
 MODE="${1:-full}"
@@ -38,8 +39,8 @@ say() { printf '\n== %s\n' "$*"; }
 
 # ---- identical data -------------------------------------------------------------------------------------------------
 say "resetting the database to the fixed Phase 2 seed"
-dotnet "$ROOT/tools/bench/DbTool/bin/Debug/net10.0/DbTool.dll" reset "$ROOT/tests/Characterization/Data/seed.sql"
-BEFORE=$(dotnet "$ROOT/tools/bench/DbTool/bin/Debug/net10.0/DbTool.dll" fingerprint)
+dotnet "$ROOT/tools/bench/DbTool/bin/$CONFIG/net10.0/DbTool.dll" reset "$ROOT/tests/Characterization/Data/seed.sql"
+BEFORE=$(dotnet "$ROOT/tools/bench/DbTool/bin/$CONFIG/net10.0/DbTool.dll" fingerprint)
 echo "fingerprint before: $BEFORE"
 
 # ---- logins ---------------------------------------------------------------------------------------------------------
@@ -114,7 +115,7 @@ say "memory after load (resident set size)"
 } | tee -a "$OUT/raw.txt"
 
 # ---- data really was identical --------------------------------------------------------------------------------------
-AFTER=$(dotnet "$ROOT/tools/bench/DbTool/bin/Debug/net10.0/DbTool.dll" fingerprint)
+AFTER=$(dotnet "$ROOT/tools/bench/DbTool/bin/$CONFIG/net10.0/DbTool.dll" fingerprint)
 echo "fingerprint after:  $AFTER" | tee -a "$OUT/raw.txt"
 if [ "$BEFORE" = "$AFTER" ]; then echo "DATA UNCHANGED: every target measured the same rows" | tee -a "$OUT/raw.txt"
 else echo "WARNING: the database changed during the run; throughput numbers are not comparable" | tee -a "$OUT/raw.txt"; fi

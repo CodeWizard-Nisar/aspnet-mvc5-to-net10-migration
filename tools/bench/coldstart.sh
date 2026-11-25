@@ -11,6 +11,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="$ROOT/tools/bench/results"; mkdir -p "$OUT"
 REPEATS="${REPEATS:-3}"
+CONFIG="${CONFIG:-Debug}"
 LOGS=/tmp/confreg; mkdir -p "$LOGS"
 
 : "${ConfReg__ConnectionString:=Server=localhost,1433;Database=ConfReg;User Id=sa;Password=ConfReg_Dev_Passw0rd!;TrustServerCertificate=True;}"
@@ -43,7 +44,7 @@ say() { printf '\n== %s\n' "$*"; }
 say "Modern.Web (.NET 10), direct :5100"
 for i in $(seq 1 "$REPEATS"); do
   pkill -f ConfReg.Modern.Web.dll 2>/dev/null || true; sleep 2
-  nohup dotnet "$ROOT/src/Modern.Web/bin/Debug/net10.0/ConfReg.Modern.Web.dll" > "$LOGS/modern.log" 2>&1 &
+  nohup dotnet "$ROOT/src/Modern.Web/bin/$CONFIG/net10.0/ConfReg.Modern.Web.dll" > "$LOGS/modern.log" 2>&1 < /dev/null &
   printf 'modern  run=%d  %s ms\n' "$i" "$(time_to_ready http://localhost:5100)" | tee -a "$OUT/coldstart.txt"
 done
 
@@ -51,14 +52,14 @@ say "Legacy.Web (net48 on Mono + nginx, NOT IIS), direct :5080"
 for i in $(seq 1 "$REPEATS"); do
   pkill -f fastcgi-mono-server4 2>/dev/null || true; sleep 2
   ( cd "$ROOT/src/Legacy.Web" && nohup fastcgi-mono-server4 /applications=/:"$PWD" /socket=tcp:127.0.0.1:9000 \
-      /logfile=/tmp/confreg-fcgi.log > /tmp/confreg-fcgi.out 2>&1 & )
+      /logfile=/tmp/confreg-fcgi.log > /tmp/confreg-fcgi.out 2>&1 < /dev/null & )
   printf 'legacy  run=%d  %s ms\n' "$i" "$(time_to_ready http://localhost:5080)" | tee -a "$OUT/coldstart.txt"
 done
 
 say "Gateway (YARP, .NET 10) :5000 - proxy only, backends already warm"
 for i in $(seq 1 "$REPEATS"); do
   pkill -f ConfReg.Gateway.dll 2>/dev/null || true; sleep 2
-  nohup dotnet "$ROOT/src/Gateway/bin/Debug/net10.0/ConfReg.Gateway.dll" > "$LOGS/gateway.log" 2>&1 &
+  nohup dotnet "$ROOT/src/Gateway/bin/$CONFIG/net10.0/ConfReg.Gateway.dll" > "$LOGS/gateway.log" 2>&1 < /dev/null &
   printf 'gateway run=%d  %s ms\n' "$i" "$(time_to_ready http://localhost:5000)" | tee -a "$OUT/coldstart.txt"
 done
 

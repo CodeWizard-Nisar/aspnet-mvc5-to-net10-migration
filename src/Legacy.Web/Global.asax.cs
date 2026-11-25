@@ -34,6 +34,12 @@ namespace ConfReg.Legacy
             // which is how the Mono-based test host runs without the IIS-only plumbing.
             if (AppConfigLoader.Get("SharedSessionEnabled") != "false")
             {
+                // CS0618 suppressed deliberately. The package marks this overload obsolete and points to
+                // HttpApplicationHost.RegisterHost(...), but in 2.3.0 the builder that RegisterHost hands you exposes
+                // only AddDataProtection and the web-object activator - there is no way to register the SESSION SERVER
+                // through it (verified against the shipped assembly). So this obsolete call is the only functional path
+                // for shared session in this version. Revisit when a release exposes session on the host builder.
+#pragma warning disable CS0618
                 this.AddSystemWebAdapters()
                     .AddJsonSessionSerializer(o =>
                     {
@@ -41,6 +47,7 @@ namespace ConfReg.Legacy
                     })
                     .AddRemoteAppServer(o => o.ApiKey = AppConfigLoader.Get("RemoteAppApiKey"))
                     .AddSessionServer();
+#pragma warning restore CS0618
             }
 
             GlobalFilters.Filters.Add(new AdminAuthorizeFilter()); // secure by default; public controllers opt out

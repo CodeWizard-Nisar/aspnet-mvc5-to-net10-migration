@@ -5,6 +5,7 @@
 # whose password matches Legacy.Web/Web.config.   Usage: tools/linux/host-legacy.sh [stop]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+CONFIG="${CONFIG:-Debug}"   # Release for benchmarking; Legacy.Web writes to bin/ either way
 SITE="$ROOT/src/Legacy.Web"
 CONF=/tmp/confreg-nginx.conf
 
@@ -17,8 +18,8 @@ for d in Legacy.Web; do
   [ -f "$ROOT/src/$d/secrets.config" ] || cp "$ROOT/config/secrets.config.example" "$ROOT/src/$d/secrets.config"
 done
 
-dotnet build "$ROOT/src/Legacy.Web" -v q
-dotnet build "$ROOT/src/Jobs.Worker" -v q   # the test harness runs the background jobs through the Worker
+dotnet build "$ROOT/src/Legacy.Web" -c "$CONFIG" -v q
+dotnet build "$ROOT/src/Jobs.Worker" -c "$CONFIG" -v q   # the test harness runs the background jobs through the Worker
 
 # TEST-ONLY: the real SystemWebAdapters framework package calls a few .NET Framework 4.x System.Web members that Mono lacks.
 # Redirect exactly those calls, in the COPY under bin/, to harmless stand-ins. See tools/linux/README.md. Not used on Windows/IIS.
@@ -47,8 +48,8 @@ http {
 }
 NGINX
 
-nohup fastcgi-mono-server4 /applications=/:"$SITE" /socket=tcp:127.0.0.1:9000 /logfile=/tmp/confreg-fcgi.log > /tmp/confreg-fcgi.out 2>&1 &
-nohup nginx -c "$CONF" > /tmp/confreg-nginx.out 2>&1 &
+nohup fastcgi-mono-server4 /applications=/:"$SITE" /socket=tcp:127.0.0.1:9000 /logfile=/tmp/confreg-fcgi.log > /tmp/confreg-fcgi.out 2>&1 < /dev/null &
+nohup nginx -c "$CONF" > /tmp/confreg-nginx.out 2>&1 < /dev/null &
 
 for i in $(seq 1 30); do
   if curl -fs "http://localhost:5080/Home/Index?format=json" >/dev/null; then echo "Legacy.Web is up on http://localhost:5080"; exit 0; fi

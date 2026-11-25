@@ -1,4 +1,4 @@
 @model TalkForm
 @{ ViewBag.Title = "Edit talk"; Layout = "~/Views/Shared/_AdminLayout.cshtml"; }
 <h1>Edit talk</h1>
-<form method="post" action="@Url.Action("Edit", "Talks")">@Html.Partial("_TalkForm", Model)</form>
+<form method="post" action="@Url.Action("Edit", "Talks")">@await Html.PartialAsync("_TalkForm", Model)</form>

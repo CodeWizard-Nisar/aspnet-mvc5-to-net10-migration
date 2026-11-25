@@ -11,6 +11,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 LOGS=/tmp/confreg; mkdir -p "$LOGS"
+CONFIG="${CONFIG:-Debug}"   # CONFIG=Release for benchmarking
 
 stop() {
   pkill -f ConfReg.Modern.Web.dll 2>/dev/null || true
@@ -34,19 +35,19 @@ export Auth__AcceptLegacySession="${AUTH_ACCEPT_LEGACY_SESSION:-false}"
 export ConfReg__LegacyCryptoKey ConfReg__LegacyCryptoIv ConfReg__PaymentApiKey
 
 # Legacy first: Modern.Web fetches session from it, and it owns creating/seeding the database.
-"$ROOT/tools/linux/host-legacy.sh" >/dev/null
+CONFIG="$CONFIG" "$ROOT/tools/linux/host-legacy.sh" >/dev/null
 echo "Legacy.Web  http://localhost:5080"
 
-dotnet build "$ROOT/src/Modern.Web" -v q
-dotnet build "$ROOT/src/Gateway" -v q
+dotnet build "$ROOT/src/Modern.Web" -c "$CONFIG" -v q
+dotnet build "$ROOT/src/Gateway" -c "$CONFIG" -v q
 
-nohup dotnet "$ROOT/src/Modern.Web/bin/Debug/net10.0/ConfReg.Modern.Web.dll" > "$LOGS/modern.log" 2>&1 &
+nohup dotnet "$ROOT/src/Modern.Web/bin/$CONFIG/net10.0/ConfReg.Modern.Web.dll" > "$LOGS/modern.log" 2>&1 < /dev/null &
 # Per-page overrides: Migration__Pages__<Page>=Legacy|Modern
 if [ -n "${MIGRATION_PAGES:-}" ]; then
   IFS=';' read -ra pairs <<< "$MIGRATION_PAGES"
   for pair in "${pairs[@]}"; do export "Migration__Pages__${pair%%=*}=${pair##*=}"; done
 fi
-nohup dotnet "$ROOT/src/Gateway/bin/Debug/net10.0/ConfReg.Gateway.dll" > "$LOGS/gateway.log" 2>&1 &
+nohup dotnet "$ROOT/src/Gateway/bin/$CONFIG/net10.0/ConfReg.Gateway.dll" > "$LOGS/gateway.log" 2>&1 < /dev/null &
 
 for i in $(seq 1 40); do
   if curl -fs http://localhost:5100/health/live >/dev/null && curl -fs http://localhost:5000/gateway/health >/dev/null; then
