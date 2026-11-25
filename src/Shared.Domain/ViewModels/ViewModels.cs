@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using ConfReg.Domain.Entities;
 
-// Flat view models. They exist because MVC's built-in JSON serialiser (JavaScriptSerializer)
-// throws on the circular graph that EF entities form, and because JSON is what the Phase 2
-// characterization tests snapshot. Note the wire format: PascalCase property names and
-// dates as "\/Date(1700000000000)\/". Phase 5 has to reproduce both exactly.
-namespace ConfReg.Legacy.Models
+// Flat view models, SHARED by Legacy.Web and Modern.Web (moved here in Phase 5). One set of classes means the two
+// apps cannot drift apart in what they send: the Phase 2 characterization tests snapshot this JSON, so
+// "Modern.Web returns the same bytes" is a property of these types plus the serializer settings, not of copy-paste.
+// Wire format: PascalCase names, dates as "\/Date(ms)\/", decimals like 37080.00, enums as numbers.
+namespace ConfReg.ViewModels
 {
     public class FormBase
     {

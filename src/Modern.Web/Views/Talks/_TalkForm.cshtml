@@ -1,0 +1,14 @@
+@model TalkForm
+@await Html.PartialAsync("_Errors", Model.Errors)
+<input type="hidden" name="Id" value="@Model.Id" />
+<div class="row g-3">
+    <div class="col-md-8"><label class="form-label">Title</label><input class="form-control" name="Title" value="@Model.Title" /></div>
+    <div class="col-md-4"><label class="form-label">Speaker</label><input class="form-control" name="Speaker" value="@Model.Speaker" /></div>
+    <div class="col-md-3"><label class="form-label">Track</label><input class="form-control" name="Track" value="@Model.Track" /></div>
+    <div class="col-md-3"><label class="form-label">Room</label><input class="form-control" name="Room" value="@Model.Room" /></div>
+    <div class="col-md-3"><label class="form-label">Starts (UTC)</label><input class="form-control" name="StartsUtc" value="@Model.StartsUtc.ToString("yyyy-MM-dd HH:mm")" /></div>
+    <div class="col-md-1"><label class="form-label">Min</label><input class="form-control" name="DurationMinutes" value="@Model.DurationMinutes" /></div>
+    <div class="col-md-2"><label class="form-label">Capacity</label><input class="form-control" name="Capacity" value="@Model.Capacity" /></div>
+</div>
+<button class="btn btn-primary mt-3" type="submit">Save</button>
+<a class="btn btn-link mt-3" href="@Url.Action("Index")">Cancel</a>

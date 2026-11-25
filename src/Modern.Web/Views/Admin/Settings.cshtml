@@ -1,0 +1,15 @@
+@model SettingsForm
+@{ ViewBag.Title = "Settings"; Layout = "~/Views/Shared/_AdminLayout.cshtml"; }
+<h1>Settings</h1>
+@if (!string.IsNullOrEmpty(Model.Notice)) { <div class="alert alert-success">@Model.Notice</div> }
+@await Html.PartialAsync("_Errors", Model.Errors)
+<form method="post" action="@Url.Action("Settings", "Admin")">
+    <div class="row g-3">
+        <div class="col-md-4"><label class="form-label">Standard price</label><input class="form-control" name="PriceStandard" value="@Model.PriceStandard.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" /></div>
+        <div class="col-md-4"><label class="form-label">Workshop price</label><input class="form-control" name="PriceWorkshop" value="@Model.PriceWorkshop.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" /></div>
+        <div class="col-md-4"><label class="form-label">Student price</label><input class="form-control" name="PriceStudent" value="@Model.PriceStudent.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" /></div>
+        <div class="col-md-6"><label class="form-label">Registration opens (UTC)</label><input class="form-control" name="OpensUtc" value="@Model.OpensUtc.ToString("yyyy-MM-dd HH:mm")" /></div>
+        <div class="col-md-6"><label class="form-label">Registration closes (UTC)</label><input class="form-control" name="ClosesUtc" value="@Model.ClosesUtc.ToString("yyyy-MM-dd HH:mm")" /></div>
+    </div>
+    <button class="btn btn-primary mt-3" type="submit">Save</button>
+</form>

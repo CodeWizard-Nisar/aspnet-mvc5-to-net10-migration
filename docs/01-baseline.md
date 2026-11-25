@@ -99,22 +99,26 @@ points at the caller, not here. **Fixed in Phase 3.**
 ### 10. No tests
 Intentional. **Phase 2 fixes this before anything else is touched.**
 
-## Status after Phase 4
+## Status after Phase 5
 
 | # | Problem | Status |
 |---|---|---|
 | 1 | `HttpContext.Current` in business logic | **Fixed** (`ISessionStore`, `IClientInfo`, `IAppPaths`) |
-| 2 | Whole EF entities in Session | Open, Phase 5 |
+| 2 | Whole EF entities in Session | **Fixed** (`WizardSnapshot`: ids and primitives) |
 | 3 | Scattered `ConfigurationManager` reads | **Fixed** (`ISettings`; one loader) |
 | 4 | Secrets in `Web.config` | **Fixed** (`secrets.config` git-ignored, env vars) |
-| 5 | `Global.asax` wiring | Partly: wiring moved to a composition root; the file itself goes in Phase 5 |
-| 6 | No `[Authorize]`, layout redirect | Open, Phase 5 |
+| 5 | `Global.asax` wiring | Partly: wiring moved to a composition root. `Global.asax` remains because `HttpApplication` is how .NET Framework starts; `Modern.Web/Program.cs` is its replacement and the file goes when Legacy.Web is retired |
+| 6 | No `[Authorize]`, layout redirect | **Fixed** (global authorization filter in BOTH apps) |
 | 7 | Reversible password encryption | **Fixed** (BCrypt, upgrade on next login) |
 | 8 | Windows Service | **Fixed** (retired; replaced by `Jobs.Worker`, see [04-jobs.md](04-jobs.md)) |
 | 9 | Connection never closed | **Fixed** (regression test) |
 | 10 | No tests | **Fixed** in Phase 2 |
 
-Details in [03-libraries.md](03-libraries.md) and [04-jobs.md](04-jobs.md). The comments in the code keep the original `BASELINE-PROBLEM #n` tags,
+Details in [03-libraries.md](03-libraries.md), [04-jobs.md](04-jobs.md) and [05-strangler.md](05-strangler.md).
+
+Of the unplanned problems below, Phase 5 fixed **E2** (stale session entity overwriting the row) and **E4** (open
+redirect), and **E6** is now a tested contract rather than an accident (`LegacyJson`). E3 is fixed on the modern side
+only. E1, E5 and E7 remain. The comments in the code keep the original `BASELINE-PROBLEM #n` tags,
 rewritten to say "fixed" where they are.
 
 ## Unplanned problems (found while writing it, documented rather than hidden)

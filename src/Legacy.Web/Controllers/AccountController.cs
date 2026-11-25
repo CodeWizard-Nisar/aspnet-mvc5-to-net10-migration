@@ -1,9 +1,11 @@
 using System.Web.Mvc;
 using ConfReg.Data.Services;
-using ConfReg.Legacy.Models;
+using ConfReg.Domain.Wizard;
+using ConfReg.ViewModels;
 
 namespace ConfReg.Legacy.Controllers
 {
+    [AllowAnonymous] // public: the registration wizard, the home page, and the login page itself
     public class AccountController : AppController
     {
         private readonly AdminAuthService _auth;
@@ -32,20 +34,21 @@ namespace ConfReg.Legacy.Controllers
             // Unplanned problems, same spot: (a) the session id is not regenerated on login, so a session
             // fixed before login stays valid after it; (b) ReturnUrl is followed without being checked,
             // an open redirect.
-            Session["AdminUserId"] = user.Id;
-            Session["AdminEmail"] = user.Email;
-            Session["AdminRole"] = user.Role;
+            Session[SessionKeys.AdminUserId] = user.Id;
+            Session[SessionKeys.AdminEmail] = user.Email;
+            Session[SessionKeys.AdminRole] = user.Role;
 
-            if (!string.IsNullOrEmpty(form.ReturnUrl)) return Redirect(form.ReturnUrl);
+            // E4, fixed in Phase 5: only follow a LOCAL returnUrl. Phase 1 redirected to whatever it was given (open redirect).
+            if (!string.IsNullOrEmpty(form.ReturnUrl) && Url.IsLocalUrl(form.ReturnUrl)) return Redirect(form.ReturnUrl);
             return Redirect("~/Admin");
         }
 
         [HttpGet]
         public ActionResult Logout()
         {
-            Session.Remove("AdminUserId");
-            Session.Remove("AdminEmail");
-            Session.Remove("AdminRole");
+            Session.Remove(SessionKeys.AdminUserId);
+            Session.Remove(SessionKeys.AdminEmail);
+            Session.Remove(SessionKeys.AdminRole);
             return RedirectToAction("Login");
         }
     }

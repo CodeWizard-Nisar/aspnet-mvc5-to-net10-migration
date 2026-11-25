@@ -73,7 +73,9 @@ public class AdminBehaviourTests
         Assert.Equal(302, (await c.Get("/Admin", json: false)).Code);
     }
 
-    // ---- known security holes, pinned as current behaviour (BASELINE-PROBLEM #6 and the E-list) ----
+    // ---- PHASE 5: the four "known bugs" below were FIXED, so their assertions were deliberately reversed. ----
+    // Phase 2 pinned them as current behaviour (BASELINE-PROBLEM #6 and E4). Each is now the opposite, in every migration
+    // stage (all-legacy, mixed, all-modern), because every admin action is behind a global authorization filter.
 
     [Theory]
     [InlineData("/Admin")]
@@ -82,36 +84,43 @@ public class AdminBehaviourTests
     [InlineData("/Talks")]
     [InlineData("/Registrations")]
     [InlineData("/Registrations/Details/1")]
-    public async Task Admin_data_is_readable_without_login_KNOWN_BUG(string path)
+    public async Task Admin_data_is_not_readable_without_login(string path)
     {
         using var c = new ConfRegClient(); // never logs in
-        Assert.Equal(200, (await c.Get(path)).Code);
+        Assert.Equal(401, (await c.Get(path)).Code);                       // JSON caller: 401, no data, no redirect
+        var page = await c.Get(path, json: false);
+        Assert.Equal(302, page.Code);                                       // browser: sent to the login page
+        Assert.Contains("/Account/Login?returnUrl=", page.Location);
     }
 
     [Fact]
-    public async Task The_csv_export_is_downloadable_without_login_KNOWN_BUG()
+    public async Task The_csv_export_is_not_downloadable_without_login()
     {
         using var c = new ConfRegClient();
         var r = await c.Get("/Attendees/Export", json: false);
-        Assert.Equal(200, r.Code);
-        Assert.Contains("Id,FirstName,LastName,Email", r.Body);
+        Assert.Equal(302, r.Code);
+        Assert.DoesNotContain("Id,FirstName,LastName,Email", r.Body);
     }
 
     [Fact]
-    public async Task Cancelling_a_registration_works_without_login_KNOWN_BUG()
+    public async Task Cancelling_a_registration_is_refused_without_login()
     {
         using var c = new ConfRegClient();
         var r = await c.Post("/Registrations/Cancel/1");
-        Assert.Equal(302, r.Code);
-        Assert.Equal("Cancelled", Db.Scalar<string>("SELECT CASE Status WHEN 2 THEN 'Cancelled' ELSE 'other' END FROM Registrations WHERE Id=1"));
+        Assert.Contains(r.Code, new[] { 302, 401 });
+        Assert.Equal(1, Db.Scalar<int>("SELECT Status FROM Registrations WHERE Id=1")); // still Paid
     }
 
     [Fact]
-    public async Task Login_follows_an_unchecked_returnUrl_KNOWN_BUG()
+    public async Task Login_only_follows_a_local_returnUrl()
     {
         using var c = new ConfRegClient();
-        var r = await c.Post("/Account/Login", ("Email", "admin@confreg.example"), ("Password", "ConfReg-Demo-1!"), ("ReturnUrl", "https://evil.example/"));
-        Assert.Equal("https://evil.example/", r.Location);
+        var evil = await c.Post("/Account/Login", ("Email", "admin@confreg.example"), ("Password", "ConfReg-Demo-1!"), ("ReturnUrl", "https://evil.example/"));
+        Assert.EndsWith("/Admin", evil.Location);
+
+        using var d = new ConfRegClient();
+        var local = await d.Post("/Account/Login", ("Email", "admin@confreg.example"), ("Password", "ConfReg-Demo-1!"), ("ReturnUrl", "/Talks"));
+        Assert.EndsWith("/Talks", local.Location);
     }
 
     [Fact]
@@ -289,7 +298,7 @@ public class AdminBehaviourTests
     [Fact]
     public async Task Attendee_search_and_filters_narrow_the_list()
     {
-        using var c = new ConfRegClient();
+        using var c = await LoggedIn();
         int all = (await c.Get("/Attendees")).Root.GetProperty("Total").GetInt32();
         int students = (await c.Get("/Attendees?ticket=Student")).Root.GetProperty("Total").GetInt32();
         int okafor = (await c.Get("/Attendees?q=Okafor")).Root.GetProperty("Total").GetInt32();
@@ -301,7 +310,7 @@ public class AdminBehaviourTests
     [Fact]
     public async Task The_csv_export_honours_the_filter_and_neutralises_formulas()
     {
-        using var c = new ConfRegClient();
+        using var c = await LoggedIn();
         Db.Exec("UPDATE Attendees SET Company = '=HYPERLINK(\"http://x\")' WHERE Id = 1");
         var all = await c.Get("/Attendees/Export", json: false);
         Assert.Equal(201, all.Body.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length); // header + 200
@@ -331,7 +340,7 @@ public class AdminBehaviourTests
     [Fact]
     public async Task The_dashboard_warns_about_talks_over_80_percent_full()
     {
-        using var c = new ConfRegClient();
+        using var c = await LoggedIn();
         var warnings = (await c.Get("/Admin")).Root.GetProperty("CapacityWarnings").EnumerateArray().ToList();
         Assert.Equal(new[] { 13, 6, 9 }, warnings.Select(w => w.GetProperty("TalkId").GetInt32()).ToArray()); // 100%, 93%, 88%
     }

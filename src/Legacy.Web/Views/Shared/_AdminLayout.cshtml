@@ -1,18 +1,6 @@
-@{
-    // BASELINE-PROBLEM #6: the ENTIRE admin authentication check, in a layout file.
-    //
-    // Why this is wrong:
-    //  - A layout runs only while a view renders. Controller actions that return a redirect, a file (CSV export)
-    //    or JSON never get here, so they are completely unprotected.
-    //  - Response.Redirect ends the response by throwing ThreadAbortException. It is slow and fragile.
-    //  - Security logic buried in presentation is invisible to anyone reading the controllers.
-    //  - There is no role check: "Staff" can do everything "Admin" can.
-    // Fixed in Phase 5: cookie authentication plus a global authorize filter on the modern side.
-    if (Session["AdminUserId"] == null)
-    {
-        Response.Redirect("~/Account/Login?returnUrl=" + HttpUtility.UrlEncode(Request.RawUrl));
-    }
-}
+@* BASELINE-PROBLEM #6, fixed in Phase 5: the login check that lived here (a Response.Redirect) is gone. A layout only runs
+   when a view renders, so it never protected redirecting POSTs, file downloads or JSON. AdminAuthorizeFilter, a global
+   filter, now guards every action. *@
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,7 +19,7 @@
         <li class="nav-item"><a class="nav-link" href="@Url.Content("~/Registrations")">Registrations</a></li>
         <li class="nav-item"><a class="nav-link" href="@Url.Content("~/Admin/Settings")">Settings</a></li>
     </ul>
-    <span class="navbar-text me-3">@Session["AdminEmail"]</span>
+    <span class="navbar-text me-3">@Session[ConfReg.Domain.Wizard.SessionKeys.AdminEmail]</span>
     <a class="btn btn-sm btn-outline-light" href="@Url.Content("~/Account/Logout")">Log out</a>
 </div></nav>
 <div class="container">@RenderBody()</div>

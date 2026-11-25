@@ -34,11 +34,11 @@ public class DatabaseTests
         return picked;
     }
 
-    private static void Start(WizardState s, string email, TicketType ticket)
+    // Phase 5: the wizard's session value is a flat WizardSnapshot, not entities (BASELINE-PROBLEM #2).
+    private static WizardSnapshot Start(string email, TicketType ticket) => new()
     {
-        s.Attendee = new Attendee { FirstName = "Net", LastName = "Ten", Email = email, Company = "Contoso" };
-        s.TicketType = ticket;
-    }
+        FirstName = "Net", LastName = "Ten", Email = email, Company = "Contoso", TicketType = ticket
+    };
 
     [Fact]
     public void EF6_creates_and_seeds_the_database_on_net10()
@@ -55,15 +55,15 @@ public class DatabaseTests
     [Fact]
     public void A_registration_can_be_held_and_paid_through_the_shared_services()
     {
-        var (reg, wizard, _) = Services();
+        var (reg, _, _) = Services();
         var talks = TwoFreeNonOverlappingTalks();
-        Start(wizard.Current, "paid@example.org", TicketType.Workshop);
+        var state = Start("paid@example.org", TicketType.Workshop);
 
-        Assert.Empty(reg.PlaceHold(wizard.Current, talks.Select(t => t.Id)));
-        Assert.Equal(RegistrationStatus.Pending, wizard.Current.Registration.Status);
-        Assert.Equal(499m, wizard.Current.Registration.TotalAmount);
+        Assert.Empty(reg.PlaceHold(state, talks.Select(t => t.Id)));
+        Assert.NotNull(state.RegistrationId);
+        Assert.Equal(499m, state.TotalAmount);
 
-        var outcome = reg.Pay(wizard.Current, "4242 4242 4242 4242");
+        var outcome = reg.Pay(state, "4242 4242 4242 4242");
         Assert.Equal(PayStatus.Paid, outcome.Status);
 
         using var ctx = _f.Db.Create();
@@ -75,11 +75,11 @@ public class DatabaseTests
     [Fact]
     public void The_payment_audit_log_uses_the_injected_client_ip_and_app_path()
     {
-        var (reg, wizard, _) = Services(ip: "198.51.100.77");
+        var (reg, _, _) = Services(ip: "198.51.100.77");
         var talks = TwoFreeNonOverlappingTalks();
-        Start(wizard.Current, "audit@example.org", TicketType.Standard);
-        reg.PlaceHold(wizard.Current, talks.Select(t => t.Id).Take(1));
-        reg.Pay(wizard.Current, "4242 4242 4242 4242");
+        var state = Start("audit@example.org", TicketType.Standard);
+        reg.PlaceHold(state, talks.Select(t => t.Id).Take(1));
+        reg.Pay(state, "4242 4242 4242 4242");
 
         string log = File.ReadAllText(Path.Combine(_f.TempDir, "App_Data", "payments.log"));
         Assert.Contains("ip=198.51.100.77", log);
@@ -89,43 +89,43 @@ public class DatabaseTests
     [Fact]
     public void Overlap_and_capacity_rules_hold_through_the_services()
     {
-        var (reg, wizard, _) = Services();
+        var (reg, _, _) = Services();
         using (var ctx = _f.Db.Create())
         {
             var all = ctx.Talks.ToList();
             var pair = all.SelectMany(a => all.Where(b => a.Id < b.Id && TalkRules.Overlaps(a, b)).Select(b => (a, b))).First();
-            Start(wizard.Current, "rules@example.org", TicketType.Standard);
-            Assert.Contains(reg.PlaceHold(wizard.Current, new[] { pair.a.Id, pair.b.Id }), e => e.Contains("overlap"));
+            var state = Start("rules@example.org", TicketType.Standard);
+            Assert.Contains(reg.PlaceHold(state, new[] { pair.a.Id, pair.b.Id }), e => e.Contains("overlap"));
 
             var seats = reg.SeatsTaken(ctx);
             var full = all.First(t => TalkRules.Remaining(t, seats) <= 0);
-            Assert.Contains(reg.PlaceHold(wizard.Current, new[] { full.Id }), e => e.EndsWith("is full."));
+            Assert.Contains(reg.PlaceHold(state, new[] { full.Id }), e => e.EndsWith("is full."));
         }
     }
 
     [Fact]
     public void Expiry_releases_the_seats_of_an_abandoned_hold_and_leaves_fresh_ones_alone()
     {
-        var (reg, wizard, _) = Services();
+        var (reg, _, _) = Services();
         var expiry = new ExpiryService(_f.Db, _f.Settings);
         expiry.ExpireUnpaid(); // clear the seed's own overdue pending rows first
 
         var talk = TwoFreeNonOverlappingTalks()[0];
-        Start(wizard.Current, "abandon@example.org", TicketType.Standard);
-        reg.PlaceHold(wizard.Current, new[] { talk.Id });
+        var state = Start("abandon@example.org", TicketType.Standard);
+        reg.PlaceHold(state, new[] { talk.Id });
         int heldBefore, heldAfter;
         using (var ctx = _f.Db.Create()) heldBefore = reg.SeatsTaken(ctx)[talk.Id];
 
         Assert.Equal(0, expiry.ExpireUnpaid()); // fresh: untouched
 
         using (var ctx = _f.Db.Create())
-            ctx.Database.ExecuteSqlCommand("UPDATE Registrations SET CreatedUtc = DATEADD(minute,-31,SYSUTCDATETIME()) WHERE Id = {0}", wizard.Current.Registration.Id);
+            ctx.Database.ExecuteSqlCommand("UPDATE Registrations SET CreatedUtc = DATEADD(minute,-31,SYSUTCDATETIME()) WHERE Id = {0}", state.RegistrationId.Value);
         Assert.Equal(1, expiry.ExpireUnpaid());
 
         using (var ctx = _f.Db.Create())
         {
             heldAfter = reg.SeatsTaken(ctx)[talk.Id];
-            Assert.Equal(RegistrationStatus.Expired, ctx.Registrations.Find(wizard.Current.Registration.Id).Status);
+            Assert.Equal(RegistrationStatus.Expired, ctx.Registrations.Find(state.RegistrationId.Value).Status);
         }
         Assert.Equal(heldBefore - 1, heldAfter);
     }
@@ -135,12 +135,12 @@ public class DatabaseTests
     {
         var short5 = LibFixture.SettingsFrom(_f.ConnectionString, holdMinutes: 5);
         var expiry = new ExpiryService(_f.Db, short5);
-        var (reg, wizard, _) = Services();
+        var (reg, _, _) = Services();
         var talk = TwoFreeNonOverlappingTalks()[0];
-        Start(wizard.Current, "short@example.org", TicketType.Standard);
-        reg.PlaceHold(wizard.Current, new[] { talk.Id });
+        var state = Start("short@example.org", TicketType.Standard);
+        reg.PlaceHold(state, new[] { talk.Id });
         using (var ctx = _f.Db.Create())
-            ctx.Database.ExecuteSqlCommand("UPDATE Registrations SET CreatedUtc = DATEADD(minute,-6,SYSUTCDATETIME()) WHERE Id = {0}", wizard.Current.Registration.Id);
+            ctx.Database.ExecuteSqlCommand("UPDATE Registrations SET CreatedUtc = DATEADD(minute,-6,SYSUTCDATETIME()) WHERE Id = {0}", state.RegistrationId.Value);
 
         Assert.True(expiry.ExpireUnpaid() >= 1); // 6 minutes old is overdue under a 5 minute hold, though not under 30
     }

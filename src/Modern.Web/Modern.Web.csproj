@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    ConfReg.Modern.Web: ASP.NET Core MVC on .NET 10. Phase 5 moves the ADMIN PORTAL here, one page at a time, while the public
+    registration wizard keeps running on Legacy.Web. Both are reached through the YARP gateway (src/Gateway).
+    It uses the SAME Shared.Domain / Shared.Data (net10.0 build) and the SAME view-model classes as the legacy app.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ConfReg.Modern</RootNamespace>
+    <AssemblyName>ConfReg.Modern.Web</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <UserSecretsId>5d1e7f04-8a63-4b0e-b7a4-2f6c91d0a7e3</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Newtonsoft, on purpose: the legacy JSON shape is defined by JavaScriptSerializer, and Newtonsoft with explicit settings
+         is the one serializer that can reproduce it byte for byte (see Infrastructure/LegacyJson.cs). -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.15" />
+    <PackageReference Include="Microsoft.AspNetCore.SystemWebAdapters" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SystemWebAdapters.CoreServices" Version="2.3.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <ProjectReference Include="..\Shared.Data\Shared.Data.csproj" />
+  </ItemGroup>
+
+</Project>

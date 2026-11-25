@@ -95,13 +95,14 @@ public class ExpiryTests
     }
 
     /// <summary>
-    /// KNOWN BUG, pinned on purpose (docs/01-baseline.md, E2). The job expires the row and frees the seats, but
-    /// the attendee's SESSION still believes the hold is good, and Pay() re-attaches the stale entity and writes
-    /// Paid over Expired. A paid registration now exists whose seats may already belong to someone else.
-    /// If a later phase fixes this, this test must be changed deliberately, in a commit that says so.
+    /// PHASE 5: this was the pinned KNOWN BUG E2 (docs/01-baseline.md), reversed on purpose. The job expires the row and
+    /// frees the seats, but the attendee's SESSION still believes the hold is good. Phase 1's Pay() trusted a stale entity
+    /// from session and wrote Paid over Expired, resurrecting a registration whose seats might belong to someone else.
+    /// Pay() now treats the DATABASE ROW as the truth: an expired hold is refused, the attendee is told so, nothing is
+    /// charged, and the seats stay released.
     /// </summary>
     [Fact]
-    public async Task Paying_after_the_job_expired_the_hold_resurrects_the_registration_KNOWN_BUG()
+    public async Task Paying_after_the_job_expired_the_hold_is_refused_and_nothing_is_charged()
     {
         var (c, code, talk) = await Hold();
         using (c)
@@ -111,9 +112,13 @@ public class ExpiryTests
             Assert.Equal("Expired", Db.StatusOf(code));
             Assert.Equal(talk.Remaining, await RemainingSeenByOthers(talk.Id));
 
-            var location = await Wizard.Pay(c); // the session clock still says "valid"
-            Assert.Contains("code=" + code, location);
-            Assert.Equal("Paid", Db.StatusOf(code)); // resurrected
+            var r = await c.Post("/Register/Step4", ("cardNumber", "4242 4242 4242 4242")); // the session clock still says "valid"
+            Assert.Equal(302, r.Code);
+            Assert.EndsWith("/Register/Step1", r.Location);               // sent back to start, with a notice
+
+            Assert.Equal("Expired", Db.StatusOf(code));                    // NOT resurrected
+            Assert.Equal(0, Db.Count("Payments p JOIN Registrations r ON r.Id=p.RegistrationId", $"r.ReferenceCode='{code}'")); // no money taken
+            Assert.Equal(talk.Remaining, await RemainingSeenByOthers(talk.Id)); // seats still free for someone else
         }
     }
 }

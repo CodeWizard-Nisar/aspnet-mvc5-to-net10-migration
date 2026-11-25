@@ -4,11 +4,11 @@ using System.Web.Mvc;
 using ConfReg.Data.Infrastructure;
 using ConfReg.Domain.Entities;
 using ConfReg.Domain.Services;
-using ConfReg.Legacy.Models;
+using ConfReg.ViewModels;
 
 namespace ConfReg.Legacy.Controllers
 {
-    // No [Authorize]: see AdminController (BASELINE-PROBLEM #6). Cancel and Refund are POSTs that
+    // Protected by the global AdminAuthorizeFilter (BASELINE-PROBLEM #6, fixed in Phase 5).
     // redirect, so they never reach a view, so the layout's login check never runs for them.
     public class RegistrationsController : AppController
     {

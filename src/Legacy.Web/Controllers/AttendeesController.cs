@@ -5,11 +5,11 @@ using System.Web.Mvc;
 using ConfReg.Data;
 using ConfReg.Data.Infrastructure;
 using ConfReg.Domain.Entities;
-using ConfReg.Legacy.Models;
+using ConfReg.ViewModels;
 
 namespace ConfReg.Legacy.Controllers
 {
-    // No [Authorize]: see AdminController (BASELINE-PROBLEM #6).
+    // Protected by the global AdminAuthorizeFilter (BASELINE-PROBLEM #6, fixed in Phase 5).
     public class AttendeesController : AppController
     {
         private const int PageSize = 25;

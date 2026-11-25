@@ -77,14 +77,44 @@ cold start, legacy against modern on the same dataset.
 ```bash
 cp .env.example .env && docker compose up -d     # SQL Server
 cp config/secrets.config.example src/Legacy.Web/secrets.config
-dotnet user-secrets set "ConfReg:ConnectionString" "..." --project src/Jobs.Worker   # or ConfReg__ConnectionString
-# Legacy.Web needs Windows + IIS Express, or tools/linux/host-legacy.sh (Mono) to try it elsewhere
-dotnet run --project src/Modern.Web              # arrives in Phase 5
 ```
 
-`Legacy.Web` targets net48 and needs Windows with IIS Express. CI runs the
-legacy and characterization jobs on `windows-latest` and everything else on
-`ubuntu-latest`. Full setup in [docs/00-setup.md](docs/00-setup.md).
+All three web processes at once, with the gateway as the only front door:
+
+```bash
+tools/linux/host-stack.sh        # gateway :5000, Legacy.Web :5080, Modern.Web :5100
+```
+
+Then browse <http://localhost:5000>. `GET /gateway/routes` says which app is serving each page, and
+`Migration:Pages:<Page>=Legacy|Modern` moves a page across or back:
+
+```bash
+MIGRATION_PAGES='Talks=Legacy' AUTH_ACCEPT_LEGACY_SESSION=true tools/linux/host-stack.sh
+```
+
+The background jobs are a separate process:
+
+```bash
+dotnet user-secrets set "ConfReg:ConnectionString" "..." --project src/Jobs.Worker
+dotnet run --project src/Jobs.Worker             # health on :5090/health
+```
+
+`Legacy.Web` targets net48 and is meant to run on IIS or IIS Express on Windows. `tools/linux/host-stack.sh` hosts it on
+Mono so the suite can run on Linux and in CI; what that does and does not prove is in
+[tools/linux/README.md](tools/linux/README.md) and the honesty section of
+[docs/05-strangler.md](docs/05-strangler.md). Full setup in [docs/00-setup.md](docs/00-setup.md).
+
+## Tests
+
+```bash
+dotnet test tests/Strangler.Tests     # JSON wire format + migration routing table (no infrastructure)
+dotnet test tests/Libraries.Net10     # the shared libraries on .NET 10, real SQL Server
+dotnet test tests/Jobs.Worker.Tests   # the Worker hosted in-process
+CONFREG_BASE_URL=http://localhost:5000 dotnet test tests/Characterization
+```
+
+The characterization suite is the one that matters: the same 101 tests and the same 34 snapshot files pass against the
+all-legacy app, against a half-migrated admin portal, and against the fully migrated one.
 
 ## Trade-offs
 

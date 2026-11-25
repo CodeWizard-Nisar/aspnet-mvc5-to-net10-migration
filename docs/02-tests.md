@@ -28,7 +28,7 @@ setting, `CONFREG_JOB_CMD` (`{job}` = expire | emails | report). Phases 2 and 3 
 `--once` hook added for the purpose; **since Phase 4 it runs the .NET 10 Worker** (`--run-job {job}`). The tests did not
 change, which is the point.
 
-## What is covered (95 tests from Phase 2, 34 snapshot files; Phase 3 added 3 more in a new file)
+## What is covered (95 tests from Phase 2, 34 snapshot files; later phases added 6 more in new files)
 
 | Area | Tests |
 |---|---|

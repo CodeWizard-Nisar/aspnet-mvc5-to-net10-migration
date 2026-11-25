@@ -13,7 +13,14 @@ public enum Scrub
     NowDates = 2,
     /// <summary>The hold countdown on step 4 depends on how long the test took.</summary>
     Countdown = 4,
-    All = References | NowDates | Countdown
+    /// <summary>
+    /// A date a FORM pre-fills from the clock, e.g. Talks/Create defaults StartsUtc to "today + 30 days at 09:00".
+    /// NowDates cannot catch it (it is a month away, far outside that +/- 1 day window) and widening NowDates would also
+    /// erase the seed's own fixed dates, which the snapshots SHOULD pin. Added in Phase 5 after this snapshot failed a day
+    /// after it was recorded - against the untouched legacy app, so it was a defect in this harness, not a migration bug.
+    /// </summary>
+    FormDefaultDate = 8,
+    All = References | NowDates | Countdown | FormDefaultDate
 }
 
 /// <summary>
@@ -49,6 +56,7 @@ public static class Snapshot
     {
         if (scrub.HasFlag(Scrub.References)) body = Regex.Replace(body, "CR-[A-HJ-NP-Z2-9]{8}", "<REF>");
         if (scrub.HasFlag(Scrub.Countdown)) body = Regex.Replace(body, "\"SecondsRemaining\":\\d+", "\"SecondsRemaining\":\"<SECS>\"");
+        if (scrub.HasFlag(Scrub.FormDefaultDate)) body = Regex.Replace(body, @"""StartsUtc"":""\\/Date\(-?\d+\)\\/""", @"""StartsUtc"":""<FORM_DEFAULT>""");
         if (scrub.HasFlag(Scrub.NowDates))
         {
             var now = DateTimeOffset.UtcNow;

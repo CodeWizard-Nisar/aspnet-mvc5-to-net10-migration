@@ -5,17 +5,13 @@ using System.Web.Mvc;
 using ConfReg.Data.Infrastructure;
 using ConfReg.Data.Services;
 using ConfReg.Domain.Entities;
-using ConfReg.Legacy.Models;
+using ConfReg.ViewModels;
 
 namespace ConfReg.Legacy.Controllers
 {
-    // BASELINE-PROBLEM #6: no [Authorize] on any admin controller.
-    // The only thing standing between the internet and these actions is a Response.Redirect inside
-    // Views/Shared/_AdminLayout.cshtml. A layout only runs when a *view* is rendered, so:
-    //   - every POST that redirects (Cancel, Refund, Delete, Save) runs with NO login check at all;
-    //   - every ?format=json response skips the layout, so admin data is readable without logging in.
-    // The Phase 2 characterization tests record this as current behaviour. Phase 5 fixes it
-    // (cookie auth + a global authorize filter) and the change is called out in docs/05-strangler.md.
+    // BASELINE-PROBLEM #6, fixed in Phase 5: every action here is protected by the global AdminAuthorizeFilter
+    // (Infrastructure/AdminAuthorizeFilter.cs). Phase 1 relied on a Response.Redirect in the layout, which JSON, file
+    // downloads and redirecting POSTs all bypassed.
     public class AdminController : AppController
     {
         private readonly IConfRegContextFactory _db;

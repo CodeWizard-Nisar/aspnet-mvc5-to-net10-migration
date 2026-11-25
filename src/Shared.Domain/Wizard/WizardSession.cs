@@ -3,34 +3,26 @@ using ConfReg.Domain.Abstractions;
 namespace ConfReg.Domain.Wizard
 {
     /// <summary>
-    /// The wizard's view of the visitor's session.
+    /// The wizard's view of the visitor's session, over an ISessionStore (BASELINE-PROBLEM #1, fixed in Phase 3).
     ///
-    /// Phase 1 (BASELINE-PROBLEM #1) this was a static class calling HttpContext.Current.Session. It is now an
-    /// ordinary object that is handed an ISessionStore. Behaviour is identical; what changed is that it no longer
-    /// needs a web request to exist, so it loads on .NET 10, runs in a unit test, and can be given a different
-    /// session technology (ASP.NET Core's ISession in Phase 5) without touching this file.
+    /// Phase 5: the stored value is a flat WizardSnapshot, and writing back is EXPLICIT (Save). With in-process session
+    /// the object you read is the stored object, so mutating it "just works"; with a remote or serialised session the
+    /// object you read is a copy and mutations are lost unless you store it again. Code that is going to be shared across
+    /// processes must not rely on the former, so Save() is part of the contract.
     /// </summary>
     public class WizardSession
     {
-        private const string Key = "ConfReg.Wizard";
         private readonly ISessionStore _session;
-
         public WizardSession(ISessionStore session) { _session = session; }
 
-        public WizardState Current
+        /// <summary>The current snapshot, never null (a fresh one if the visitor has none). Call Save after changing it.</summary>
+        public WizardSnapshot Load()
         {
-            get
-            {
-                var state = _session.Get<WizardState>(Key);
-                if (state == null)
-                {
-                    state = new WizardState();
-                    _session.Set(Key, state);
-                }
-                return state;
-            }
+            return _session.Get<WizardSnapshot>(SessionKeys.Wizard) ?? new WizardSnapshot();
         }
 
-        public void Clear() { _session.Remove(Key); }
+        public void Save(WizardSnapshot snapshot) { _session.Set(SessionKeys.Wizard, snapshot); }
+
+        public void Clear() { _session.Remove(SessionKeys.Wizard); }
     }
 }

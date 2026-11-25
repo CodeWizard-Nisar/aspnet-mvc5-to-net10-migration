@@ -20,6 +20,12 @@ done
 dotnet build "$ROOT/src/Legacy.Web" -v q
 dotnet build "$ROOT/src/Jobs.Worker" -v q   # the test harness runs the background jobs through the Worker
 
+# TEST-ONLY: the real SystemWebAdapters framework package calls a few .NET Framework 4.x System.Web members that Mono lacks.
+# Redirect exactly those calls, in the COPY under bin/, to harmless stand-ins. See tools/linux/README.md. Not used on Windows/IIS.
+dotnet build "$ROOT/tools/linux/MonoShims" -v q
+dotnet build "$ROOT/tools/linux/PatchFrameworkServices" -v q
+dotnet "$ROOT/tools/linux/PatchFrameworkServices/bin/Debug/net10.0/PatchFrameworkServices.dll" "$SITE/bin" "$ROOT/tools/linux/MonoShims/bin/Debug/net48/ConfReg.MonoShims.dll"
+
 cat > "$CONF" <<NGINX
 daemon off;
 pid /tmp/confreg-nginx.pid;

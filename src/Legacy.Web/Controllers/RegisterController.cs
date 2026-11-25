@@ -9,7 +9,7 @@ using ConfReg.Domain.Abstractions;
 using ConfReg.Domain.Entities;
 using ConfReg.Domain.Rules;
 using ConfReg.Domain.Wizard;
-using ConfReg.Legacy.Models;
+using ConfReg.ViewModels;
 
 namespace ConfReg.Legacy.Controllers
 {
@@ -19,6 +19,7 @@ namespace ConfReg.Legacy.Controllers
     /// Note what is NOT here: no DI (services are `new`ed), no [Authorize] (it is public),
     /// no abstraction over Session, no clock. All deliberate, see docs/01-baseline.md.
     /// </summary>
+    [AllowAnonymous] // public: the registration wizard, the home page, and the login page itself
     public class RegisterController : AppController
     {
         private readonly RegistrationService _registrations;
@@ -44,9 +45,9 @@ namespace ConfReg.Legacy.Controllers
             if (!_settings.IsOpen())
                 return Respond(new ClosedModel { OpensUtc = _settings.OpensUtc, ClosesUtc = _settings.ClosesUtc }, "Closed");
 
-            var a = _wizard.Current.Attendee;
+            var a = _wizard.Load();
             var form = new Step1Form { Notice = TempData["Notice"] as string };
-            if (a != null)
+            if (a.Email != null)
             {
                 form.FirstName = a.FirstName; form.LastName = a.LastName; form.Email = a.Email;
                 form.Company = a.Company; form.JobTitle = a.JobTitle; form.DietaryRequirements = a.DietaryRequirements;
@@ -64,19 +65,17 @@ namespace ConfReg.Legacy.Controllers
             if (!IsValidEmail(form.Email)) form.Errors.Add("A valid email address is required.");
             if (form.Errors.Count > 0) return Respond(form);
 
-            var state = _wizard.Current;
+            var state = _wizard.Load();
             // Changing details invalidates any hold made for the old ones.
             _registrations.ReleaseHold(state);
             state.TicketType = null;
-            state.Attendee = new Attendee
-            {
-                FirstName = form.FirstName.Trim(),
-                LastName = form.LastName.Trim(),
-                Email = form.Email.Trim(),
-                Company = form.Company,
-                JobTitle = form.JobTitle,
-                DietaryRequirements = form.DietaryRequirements
-            };
+            state.FirstName = form.FirstName.Trim();
+            state.LastName = form.LastName.Trim();
+            state.Email = form.Email.Trim();
+            state.Company = form.Company;
+            state.JobTitle = form.JobTitle;
+            state.DietaryRequirements = form.DietaryRequirements;
+            _wizard.Save(state);
             return RedirectToAction("Step2");
         }
 
@@ -85,16 +84,16 @@ namespace ConfReg.Legacy.Controllers
         [HttpGet]
         public ActionResult Step2()
         {
-            var state = _wizard.Current;
-            if (state.Attendee == null) return RedirectToAction("Step1");
+            var state = _wizard.Load();
+            if (state.Email == null) return RedirectToAction("Step1");
             return Respond(BuildStep2(state.TicketType));
         }
 
         [HttpPost]
         public ActionResult Step2(string ticketType)
         {
-            var state = _wizard.Current;
-            if (state.Attendee == null) return RedirectToAction("Step1");
+            var state = _wizard.Load();
+            if (state.Email == null) return RedirectToAction("Step1");
 
             TicketType parsed;
             var form = BuildStep2(null);
@@ -102,7 +101,7 @@ namespace ConfReg.Legacy.Controllers
 
             if (!Enum.TryParse(ticketType, true, out parsed) || !Enum.IsDefined(typeof(TicketType), parsed))
                 form.Errors.Add("Please choose a ticket type.");
-            else if (parsed == TicketType.Student && !TicketRules.IsEduEmail(state.Attendee.Email))
+            else if (parsed == TicketType.Student && !TicketRules.IsEduEmail(state.Email))
                 form.Errors.Add("Student tickets require an .edu email address.");
 
             if (form.Errors.Count > 0) return Respond(form);
@@ -110,6 +109,7 @@ namespace ConfReg.Legacy.Controllers
             // A different ticket means a different price: any existing hold is now wrong.
             _registrations.ReleaseHold(state);
             state.TicketType = parsed;
+            _wizard.Save(state);
             return RedirectToAction("Step3");
         }
 
@@ -129,20 +129,21 @@ namespace ConfReg.Legacy.Controllers
         [HttpGet]
         public ActionResult Step3()
         {
-            var state = _wizard.Current;
-            if (state.Attendee == null) return RedirectToAction("Step1");
+            var state = _wizard.Load();
+            if (state.Email == null) return RedirectToAction("Step1");
             if (state.TicketType == null) return RedirectToAction("Step2");
-            return Respond(BuildStep3(state, state.SelectedTalks.Select(t => t.Id)));
+            return Respond(BuildStep3(state, state.SelectedTalkIds));
         }
 
         [HttpPost]
         public ActionResult Step3(int[] talkIds)
         {
-            var state = _wizard.Current;
-            if (state.Attendee == null) return RedirectToAction("Step1");
+            var state = _wizard.Load();
+            if (state.Email == null) return RedirectToAction("Step1");
             if (state.TicketType == null) return RedirectToAction("Step2");
 
             var errors = _registrations.PlaceHold(state, talkIds);
+            _wizard.Save(state); // PlaceHold released any earlier hold even when the new selection is refused
             if (errors.Count > 0)
             {
                 var form = BuildStep3(state, talkIds ?? new int[0]);
@@ -152,7 +153,7 @@ namespace ConfReg.Legacy.Controllers
             return RedirectToAction("Step4");
         }
 
-        private Step3Form BuildStep3(WizardState state, IEnumerable<int> selectedIds)
+        private Step3Form BuildStep3(WizardSnapshot state, IEnumerable<int> selectedIds)
         {
             var selected = new HashSet<int>(selectedIds);
             using (var ctx = _db.Create())
@@ -184,16 +185,16 @@ namespace ConfReg.Legacy.Controllers
         [HttpGet]
         public ActionResult Step4()
         {
-            var state = _wizard.Current;
-            if (state.Registration == null) return RedirectToAction("Step3");
+            var state = _wizard.Load();
+            if (state.RegistrationId == null) return RedirectToAction("Step3");
             return Respond(BuildStep4(state));
         }
 
         [HttpPost]
         public ActionResult Step4(string cardNumber)
         {
-            var state = _wizard.Current;
-            if (state.Registration == null) return RedirectToAction("Step3");
+            var state = _wizard.Load();
+            if (state.RegistrationId == null) return RedirectToAction("Step3");
 
             var outcome = _registrations.Pay(state, cardNumber);
             switch (outcome.Status)
@@ -204,6 +205,7 @@ namespace ConfReg.Legacy.Controllers
 
                 case PayStatus.HoldExpired:
                 case PayStatus.NoHold:
+                    _wizard.Save(state); // Pay cleared the lost hold from the snapshot
                     TempData["Notice"] = outcome.Message;
                     return RedirectToAction("Step1");
 
@@ -214,18 +216,23 @@ namespace ConfReg.Legacy.Controllers
             }
         }
 
-        private Step4Form BuildStep4(WizardState state)
+        private Step4Form BuildStep4(WizardSnapshot state)
         {
-            var reg = state.Registration;
+            List<string> titles;
+            using (var ctx = _db.Create())
+            {
+                var ids = state.SelectedTalkIds;
+                titles = ctx.Talks.Where(t => ids.Contains(t.Id)).OrderBy(t => t.Id).Select(t => t.Title).ToList();
+            }
             return new Step4Form
             {
-                Name = state.Attendee.FirstName + " " + state.Attendee.LastName,
-                Email = state.Attendee.Email,
-                TicketType = reg.TicketType.ToString(),
-                TotalAmount = reg.TotalAmount,
-                TalkTitles = state.SelectedTalks.Select(t => t.Title).ToList(),
+                Name = state.FirstName + " " + state.LastName,
+                Email = state.Email,
+                TicketType = state.TicketType.Value.ToString(),
+                TotalAmount = state.TotalAmount.Value,
+                TalkTitles = titles,
                 SecondsRemaining = Math.Max(0, (int)(state.HoldExpiresUtc.Value - DateTime.UtcNow).TotalSeconds),
-                ReferenceCode = reg.ReferenceCode
+                ReferenceCode = state.ReferenceCode
             };
         }
 

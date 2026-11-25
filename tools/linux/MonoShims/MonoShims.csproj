@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- TEST-ONLY. See tools/linux/README.md. Never deployed. -->
+  <PropertyGroup><TargetFramework>net48</TargetFramework><AssemblyName>ConfReg.MonoShims</AssemblyName></PropertyGroup>
+</Project>

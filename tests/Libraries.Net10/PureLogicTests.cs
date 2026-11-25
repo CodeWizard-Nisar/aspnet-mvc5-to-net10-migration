@@ -93,10 +93,17 @@ public class PureLogicTests
     public void The_wizard_session_works_with_no_web_request_at_all()
     {
         var wizard = new WizardSession(new DictionarySessionStore());
-        wizard.Current.TicketType = TicketType.Workshop;
-        Assert.Equal(TicketType.Workshop, wizard.Current.TicketType); // same state object on the next read
+
+        var snapshot = wizard.Load();
+        snapshot.TicketType = TicketType.Workshop;
+        // Phase 5: writing back is EXPLICIT. With a shared or serialised session the object you read is a COPY, so a
+        // mutation that is not saved is lost; code meant to run across processes must not rely on in-process aliasing.
+        Assert.Null(wizard.Load().TicketType);
+        wizard.Save(snapshot);
+        Assert.Equal(TicketType.Workshop, wizard.Load().TicketType);
+
         wizard.Clear();
-        Assert.Null(wizard.Current.TicketType);                       // a fresh one after Clear
+        Assert.Null(wizard.Load().TicketType);
     }
 
     [Fact]
